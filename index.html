@@ -9,8 +9,6 @@
     </script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
     </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
-    </script>
 
     <style>
         * {
@@ -479,8 +477,8 @@
     <div class="auth-overlay" id="authOverlay">
         <form class="auth-card" id="loginForm">
             <h2>🔐 Winzo Admin Login</h2>
-            <p>Sign in with an authorized Firebase account.</p>
-            <input id="loginEmail" type="email" autocomplete="username" placeholder="Admin email" required />
+            <p id="loginDescription">Sign in using the local admin account stored in this browser.</p>
+            <input id="loginUsername" type="text" autocomplete="username" placeholder="Username" required />
             <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required />
             <button class="auth-login" id="loginBtn" type="submit">Sign In</button>
             <div class="auth-error" id="loginError"></div>
@@ -488,7 +486,7 @@
     </div>
     <div class="admin-container hidden" id="adminApp">
         <div class="admin-header">
-            <h1><span>Winzo</span> · Admin</h1>
+            <h1>🎯 <span>Winzo</span> · Admin</h1>
             <div class="status">
                 <span class="dot online" id="statusDot"></span>
                 <span id="adminStatus">🔐 Signing in...</span>
@@ -497,6 +495,7 @@
                 <button class="load-users-btn" id="loadUsersBtn">👥 Load Users</button>
                 <button class="debug-btn" id="debugBtn">🐛 Debug Users</button>
                 <button class="clear-btn" id="clearBtn">🧹 Clear Screen</button>
+                <button class="refresh-btn hidden" id="manageAccountsBtn">👤 Accounts</button>
                 <button class="logout-btn" id="logoutBtn">↪ Logout</button>
             </div>
         </div>
@@ -532,15 +531,19 @@
         let database = null;
         let toastTimeout = null;
         let allUsers = {};
-        let auth = null;
         let currentUser = null;
         let currentRole = null;
+
+        // Local-only administrator accounts. Nothing related to login
+        // credentials is stored in Firebase. Passwords are stored as
+        // SHA-256 hashes in this browser's localStorage.
+        const LOCAL_ACCOUNTS_KEY = 'Winzo_admin_accounts_v1';
+        const LOCAL_SESSION_KEY = 'Winzo_admin_session_v1';
 
         try {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
-            auth = firebase.auth();
-            console.log('✅ Firebase connected (solve-527f4)');
+            console.log('✅ Firebase connected (data only)');
             document.getElementById('adminStatus').textContent = '🟢 Online';
             document.getElementById('statusDot').className = 'dot online';
         } catch (e) {
@@ -554,113 +557,127 @@
             toast.textContent = message;
             toast.className = 'toast show ' + type;
             if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 4000);
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        // ============================================================
-        //  AUTHENTICATION / ROLE CHECK
-        //  Firebase Authentication handles the password. The user's
-        //  role is read from /admins/{uid}: { role: "admin"|"superadmin" }.
-        // ============================================================
-        function setAuthError(message) {
-            document.getElementById('loginError').textContent = message || '';
+        function getAccounts() {
+            try { return JSON.parse(localStorage.getItem(LOCAL_ACCOUNTS_KEY) || '{}'); }
+            catch (e) { return {}; }
         }
+        function saveAccounts(accounts) { localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(accounts)); }
+        async function hashPassword(password) {
+            const data = new TextEncoder().encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function setAuthError(message) { document.getElementById('loginError').textContent = message || ''; }
 
-        function showAdminApp(user, role) {
-            currentUser = user;
-            currentRole = role;
+        function showAdminApp(username, role) {
+            currentUser = username; currentRole = role;
+            localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({ username, role }));
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('adminApp').classList.remove('hidden');
             const badge = document.getElementById('roleBadge');
             badge.textContent = role === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN';
             badge.classList.remove('hidden');
-            document.getElementById('adminStatus').textContent =
-                '🟢 ' + (user.email || 'Authorized');
+            document.getElementById('manageAccountsBtn').classList.toggle('hidden', role !== 'superadmin');
+            document.getElementById('adminStatus').textContent = '🟢 ' + username;
             loadUsers();
         }
 
         function showLogin() {
-            currentUser = null;
-            currentRole = null;
+            currentUser = null; currentRole = null;
+            localStorage.removeItem(LOCAL_SESSION_KEY);
             document.getElementById('adminApp').classList.add('hidden');
             document.getElementById('authOverlay').classList.remove('hidden');
             document.getElementById('roleBadge').classList.add('hidden');
+            document.getElementById('manageAccountsBtn').classList.add('hidden');
             document.getElementById('loginPassword').value = '';
         }
 
-        async function checkAdminRole(user) {
-            if (!database || !user) throw new Error('Authentication is unavailable.');
-            const snap = await database.ref('admins/' + user.uid).once('value');
-            const profile = snap.val();
-            if (!profile) throw new Error('This account is not authorized as an admin.');
-            const role = String(profile.role || '').toLowerCase();
-            if (role !== 'admin' && role !== 'superadmin') {
-                throw new Error('Invalid admin role. Use admin or superadmin.');
-            }
-            return role;
+        function setupFirstAdmin() {
+            const card = document.querySelector('.auth-card');
+            card.innerHTML = `
+                <h2>⚙️ Create Super Admin</h2>
+                <p>This is stored only in this browser's localStorage.</p>
+                <input id="setupUsername" type="text" autocomplete="username" placeholder="Super admin username" required />
+                <input id="setupPassword" type="password" autocomplete="new-password" placeholder="Password (min 6 characters)" required />
+                <input id="setupPassword2" type="password" autocomplete="new-password" placeholder="Confirm password" required />
+                <button class="auth-login" id="setupBtn" type="button">Create Super Admin</button>
+                <div class="auth-error" id="loginError"></div>`;
+            document.getElementById('setupBtn').onclick = async () => {
+                const username = document.getElementById('setupUsername').value.trim();
+                const password = document.getElementById('setupPassword').value;
+                const confirm = document.getElementById('setupPassword2').value;
+                if (!username || password.length < 6) return setAuthError('Username is required and password must be at least 6 characters.');
+                if (password !== confirm) return setAuthError('Passwords do not match.');
+                const accounts = getAccounts();
+                accounts[username.toLowerCase()] = { username, role: 'superadmin', passwordHash: await hashPassword(password) };
+                saveAccounts(accounts);
+                showLoginForm();
+                document.getElementById('loginUsername').value = username;
+                showToast('✅ Super admin created locally.', 'success');
+            };
         }
 
-        document.getElementById('loginForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            if (!auth) {
-                setAuthError('Firebase Authentication is unavailable.');
-                return;
-            }
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.textContent = 'Signing in...';
-            setAuthError('');
-            try {
-                const credential = await auth.signInWithEmailAndPassword(email, password);
-                const role = await checkAdminRole(credential.user);
-                showAdminApp(credential.user, role);
-            } catch (error) {
-                console.error('❌ Admin login failed:', error);
-                if (auth.currentUser) await auth.signOut().catch(() => {});
-                setAuthError(error.message || 'Login failed.');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Sign In';
-            }
-        });
+        function showLoginForm() {
+            const card = document.querySelector('.auth-card');
+            card.innerHTML = `
+                <h2>🔐 Winzo Admin Login</h2>
+                <p>Login credentials are stored locally in this browser, not in Firebase.</p>
+                <input id="loginUsername" type="text" autocomplete="username" placeholder="Username" required />
+                <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required />
+                <button class="auth-login" id="loginBtn" type="submit">Sign In</button>
+                <div class="auth-error" id="loginError"></div>`;
+            document.getElementById('loginForm').onsubmit = async (event) => {
+                event.preventDefault();
+                const username = document.getElementById('loginUsername').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                const account = getAccounts()[username.toLowerCase()];
+                if (!account || account.passwordHash !== await hashPassword(password)) return setAuthError('Invalid username or password.');
+                showAdminApp(account.username, account.role);
+            };
+        }
 
-        document.getElementById('logoutBtn').onclick = async () => {
-            if (auth) await auth.signOut().catch(console.error);
-            showLogin();
-        };
+        function initLocalAuth() {
+            const accounts = getAccounts();
+            if (!Object.keys(accounts).length) { setupFirstAdmin(); return; }
+            showLoginForm();
+            try {
+                const session = JSON.parse(localStorage.getItem(LOCAL_SESSION_KEY) || 'null');
+                const account = session && accounts[String(session.username).toLowerCase()];
+                if (account && account.role === session.role) showAdminApp(account.username, account.role);
+            } catch (e) {}
+        }
+
+        document.getElementById('logoutBtn').onclick = () => showLogin();
 
         document.getElementById('clearBtn').onclick = () => {
-            // Screen-only clear: Firebase data is NOT deleted.
-            document.getElementById('transactionList').innerHTML =
-                '<div class="empty-state">Screen cleared. Click Refresh to load transactions.</div>';
-            document.getElementById('playerList').innerHTML =
-                '<div class="empty-state">Screen cleared. Click Load Users to load players.</div>';
+            document.getElementById('transactionList').innerHTML = '<div class="empty-state">Screen cleared. Click Refresh to load transactions.</div>';
+            document.getElementById('playerList').innerHTML = '<div class="empty-state">Screen cleared. Click Load Users to load players.</div>';
             document.getElementById('txCount').textContent = '(cleared)';
             document.getElementById('playerCount').textContent = '(cleared)';
             showToast('🧹 Screen cleared. Firebase data was not deleted.', 'success');
         };
 
-        if (auth) {
-            auth.onAuthStateChanged(async (user) => {
-                if (!user) {
-                    showLogin();
-                    return;
-                }
-                try {
-                    const role = await checkAdminRole(user);
-                    showAdminApp(user, role);
-                } catch (error) {
-                    console.error('❌ Admin authorization failed:', error);
-                    await auth.signOut().catch(() => {});
-                    setAuthError(error.message);
-                    showLogin();
-                }
+        document.getElementById('manageAccountsBtn').onclick = () => {
+            if (currentRole !== 'superadmin') return;
+            const accounts = getAccounts();
+            const names = Object.values(accounts).map(a => `${a.username} (${a.role})`).join('\n');
+            const username = prompt('Create a new admin username (Cancel to close):');
+            if (!username) return;
+            const clean = username.trim();
+            if (!clean || accounts[clean.toLowerCase()]) return showToast('Username already exists or is invalid.', 'error');
+            const password = prompt('Password for ' + clean + ' (minimum 6 characters):');
+            if (!password || password.length < 6) return showToast('Password must be at least 6 characters.', 'error');
+            const role = prompt('Role: type admin or superadmin', 'admin');
+            if (role !== 'admin' && role !== 'superadmin') return showToast('Invalid role.', 'error');
+            hashPassword(password).then(hash => {
+                accounts[clean.toLowerCase()] = { username: clean, role, passwordHash: hash };
+                saveAccounts(accounts);
+                showToast('✅ Account created locally.', 'success');
             });
-        }
+        };
 
         // ============================================================
         //  LOAD DATA
@@ -1066,14 +1083,14 @@
         // ============================================================
         //  INIT
         // ============================================================
-        if (database && auth) {
-            console.log('✅ Admin server ready (authentication required)');
-            console.log('ℹ️ Authorized roles: admin, superadmin');
+        initLocalAuth();
+        if (database) {
+            console.log('✅ Admin server ready (local authentication)');
+            console.log('ℹ️ Login accounts are stored only in localStorage.');
             console.log('ℹ️ Screen Clear only clears the visible lists; it does not delete Firebase data.');
         } else {
             document.getElementById('adminStatus').textContent = '🔴 Offline - Check Firebase config';
             document.getElementById('statusDot').className = 'dot offline';
-            setAuthError('Firebase is not available. Check the Firebase configuration.');
         }
     </script>
 </body>
