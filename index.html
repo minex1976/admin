@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Admin · Bingo Server</title>
+    <title>Admin · Winzo Server</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
     </script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
     </script>
 
     <style>
@@ -417,18 +419,85 @@
         .load-users-btn:hover {
             background: rgba(70, 200, 120, 0.3);
         }
+
+
+        /* Authentication */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #081522;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(20, 45, 70, 0.96);
+            border: 1px solid rgba(60, 120, 170, 0.25);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+        .auth-card h2 { color:#f5e7c8; margin-bottom:8px; }
+        .auth-card p { color:#8ab0c8; font-size:.85rem; margin-bottom:20px; }
+        .auth-card input {
+            width:100%; padding:12px 14px; margin-bottom:10px;
+            background:#0a1a2a; border:1px solid rgba(60,120,170,.4);
+            border-radius:12px; color:#e8f0f8; outline:none;
+        }
+        .auth-card input:focus { border-color:#f5c542; }
+        .auth-login {
+            width:100%; padding:11px; border:0; border-radius:12px;
+            background:#f5c542; color:#16202a; font-weight:800; cursor:pointer;
+        }
+        .auth-login:disabled { opacity:.5; cursor:not-allowed; }
+        .auth-error { min-height:20px; color:#ff8a8a; font-size:.78rem; margin-top:10px; }
+        .role-badge {
+            display:inline-block; margin-left:8px; padding:3px 9px;
+            border-radius:12px; font-size:.68rem; font-weight:700;
+            background:rgba(245,197,66,.15); color:#f5d76e;
+        }
+        .logout-btn, .clear-btn {
+            background:rgba(255,107,107,.12);
+            border:1px solid rgba(255,107,107,.25);
+            border-radius:30px; padding:6px 14px; color:#ffaaaA;
+            cursor:pointer; font-size:.8rem;
+        }
+        .clear-btn {
+            background:rgba(245,197,66,.10);
+            border-color:rgba(245,197,66,.25); color:#f5d76e;
+        }
+        .logout-btn:hover, .clear-btn:hover { background:rgba(255,107,107,.22); }
+        .clear-btn:hover { background:rgba(245,197,66,.20); }
+        .hidden { display:none !important; }
     </style>
 </head>
 <body>
-    <div class="admin-container">
+    <div class="auth-overlay" id="authOverlay">
+        <form class="auth-card" id="loginForm">
+            <h2>🔐 Winzo Admin Login</h2>
+            <p>Sign in with an authorized Firebase account.</p>
+            <input id="loginEmail" type="email" autocomplete="username" placeholder="Admin email" required />
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required />
+            <button class="auth-login" id="loginBtn" type="submit">Sign In</button>
+            <div class="auth-error" id="loginError"></div>
+        </form>
+    </div>
+    <div class="admin-container hidden" id="adminApp">
         <div class="admin-header">
-            <h1>🎯 <span>BINGO</span> · Admin</h1>
+            <h1><span>Winzo</span> · Admin</h1>
             <div class="status">
                 <span class="dot online" id="statusDot"></span>
-                <span id="adminStatus">🟢 Online</span>
+                <span id="adminStatus">🔐 Signing in...</span>
+                <span class="role-badge hidden" id="roleBadge"></span>
                 <button class="refresh-btn" id="refreshBtn">⟳ Refresh</button>
                 <button class="load-users-btn" id="loadUsersBtn">👥 Load Users</button>
                 <button class="debug-btn" id="debugBtn">🐛 Debug Users</button>
+                <button class="clear-btn" id="clearBtn">🧹 Clear Screen</button>
+                <button class="logout-btn" id="logoutBtn">↪ Logout</button>
             </div>
         </div>
 
@@ -463,10 +532,14 @@
         let database = null;
         let toastTimeout = null;
         let allUsers = {};
+        let auth = null;
+        let currentUser = null;
+        let currentRole = null;
 
         try {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
+            auth = firebase.auth();
             console.log('✅ Firebase connected (solve-527f4)');
             document.getElementById('adminStatus').textContent = '🟢 Online';
             document.getElementById('statusDot').className = 'dot online';
@@ -484,6 +557,109 @@
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('show');
             }, 4000);
+        }
+
+        // ============================================================
+        //  AUTHENTICATION / ROLE CHECK
+        //  Firebase Authentication handles the password. The user's
+        //  role is read from /admins/{uid}: { role: "admin"|"superadmin" }.
+        // ============================================================
+        function setAuthError(message) {
+            document.getElementById('loginError').textContent = message || '';
+        }
+
+        function showAdminApp(user, role) {
+            currentUser = user;
+            currentRole = role;
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('adminApp').classList.remove('hidden');
+            const badge = document.getElementById('roleBadge');
+            badge.textContent = role === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN';
+            badge.classList.remove('hidden');
+            document.getElementById('adminStatus').textContent =
+                '🟢 ' + (user.email || 'Authorized');
+            loadUsers();
+        }
+
+        function showLogin() {
+            currentUser = null;
+            currentRole = null;
+            document.getElementById('adminApp').classList.add('hidden');
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('roleBadge').classList.add('hidden');
+            document.getElementById('loginPassword').value = '';
+        }
+
+        async function checkAdminRole(user) {
+            if (!database || !user) throw new Error('Authentication is unavailable.');
+            const snap = await database.ref('admins/' + user.uid).once('value');
+            const profile = snap.val();
+            if (!profile) throw new Error('This account is not authorized as an admin.');
+            const role = String(profile.role || '').toLowerCase();
+            if (role !== 'admin' && role !== 'superadmin') {
+                throw new Error('Invalid admin role. Use admin or superadmin.');
+            }
+            return role;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!auth) {
+                setAuthError('Firebase Authentication is unavailable.');
+                return;
+            }
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            setAuthError('');
+            try {
+                const credential = await auth.signInWithEmailAndPassword(email, password);
+                const role = await checkAdminRole(credential.user);
+                showAdminApp(credential.user, role);
+            } catch (error) {
+                console.error('❌ Admin login failed:', error);
+                if (auth.currentUser) await auth.signOut().catch(() => {});
+                setAuthError(error.message || 'Login failed.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+
+        document.getElementById('logoutBtn').onclick = async () => {
+            if (auth) await auth.signOut().catch(console.error);
+            showLogin();
+        };
+
+        document.getElementById('clearBtn').onclick = () => {
+            // Screen-only clear: Firebase data is NOT deleted.
+            document.getElementById('transactionList').innerHTML =
+                '<div class="empty-state">Screen cleared. Click Refresh to load transactions.</div>';
+            document.getElementById('playerList').innerHTML =
+                '<div class="empty-state">Screen cleared. Click Load Users to load players.</div>';
+            document.getElementById('txCount').textContent = '(cleared)';
+            document.getElementById('playerCount').textContent = '(cleared)';
+            showToast('🧹 Screen cleared. Firebase data was not deleted.', 'success');
+        };
+
+        if (auth) {
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    showLogin();
+                    return;
+                }
+                try {
+                    const role = await checkAdminRole(user);
+                    showAdminApp(user, role);
+                } catch (error) {
+                    console.error('❌ Admin authorization failed:', error);
+                    await auth.signOut().catch(() => {});
+                    setAuthError(error.message);
+                    showLogin();
+                }
+            });
         }
 
         // ============================================================
@@ -890,14 +1066,14 @@
         // ============================================================
         //  INIT
         // ============================================================
-        if (database) {
-            loadUsers(); // initial load
-            console.log('✅ Admin server started (solve-527f4)');
-            console.log('ℹ️ Click "👥 Load Users" to manually load user list.');
-            console.log('ℹ️ If dropdown stays empty, check Firebase permissions.');
+        if (database && auth) {
+            console.log('✅ Admin server ready (authentication required)');
+            console.log('ℹ️ Authorized roles: admin, superadmin');
+            console.log('ℹ️ Screen Clear only clears the visible lists; it does not delete Firebase data.');
         } else {
             document.getElementById('adminStatus').textContent = '🔴 Offline - Check Firebase config';
             document.getElementById('statusDot').className = 'dot offline';
+            setAuthError('Firebase is not available. Check the Firebase configuration.');
         }
     </script>
 </body>
