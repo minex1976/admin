@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Winzo Player Analytics</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<style>
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#18213d,#080b16 70%);color:#eef2ff;font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh;padding:18px}
-.app{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.title{font-size:25px;font-weight:900}.sub{color:#8e9ab8;font-size:12px;margin-top:4px}
-.card{background:rgba(20,27,48,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;box-shadow:0 18px 50px #0005;margin-bottom:14px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:150px}.field label{display:block;color:#8e9ab8;font-size:11px;margin-bottom:6px}.field input,.field select{width:100%;padding:11px;border-radius:12px;border:1px solid #303b59;background:#0d1324;color:#fff}
-button{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#ffd75a,#efaa24);font-weight:800;color:#17120a;cursor:pointer}
-.status{font-size:12px;color:#8e9ab8;margin-top:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:16px;border-radius:16px;background:#0d1324;border:1px solid #25304b}.metric b{display:block;font-size:28px;color:#ffd75a}.metric span{font-size:11px;color:#8e9ab8}
-.formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
-.note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
-@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>Winzo Player Analytics · round by round</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#18213d,#080b16 70%);color:#eef2ff;font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh;padding:18px}
+    .app{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.title{font-size:25px;font-weight:900}.sub{color:#8e9ab8;font-size:12px;margin-top:4px}
+    .card{background:rgba(20,27,48,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;box-shadow:0 18px 50px #0005;margin-bottom:14px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:150px}.field label{display:block;color:#8e9ab8;font-size:11px;margin-bottom:6px}.field input,.field select{width:100%;padding:11px;border-radius:12px;border:1px solid #303b59;background:#0d1324;color:#fff}
+    button{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#ffd75a,#efaa24);font-weight:800;color:#17120a;cursor:pointer}
+    .status{font-size:12px;color:#8e9ab8;margin-top:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:16px;border-radius:16px;background:#0d1324;border:1px solid #25304b}.metric b{display:block;font-size:28px;color:#ffd75a}.metric span{font-size:11px;color:#8e9ab8}
+    .formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
+    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
+    .note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
+    @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
+  </style>
 </head>
 <body>
 <div class="app">
@@ -28,7 +28,8 @@ table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{pa
 
   <div class="card">
     <div class="controls">
-      <div class="field"><label>FROM DATE (ETHIOPIA)</label><input id="fromDate" type="date"></div><div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
+      <div class="field"><label>FROM DATE (ETHIOPIA)</label><input id="fromDate" type="date"></div>
+      <div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
       <div class="field"><label>ROOM</label><select id="room"><option value="both">Both rooms</option><option value="room_15">15 Birr</option><option value="room_30">30 Birr</option></select></div>
       <button id="load">Load data</button>
     </div>
@@ -48,8 +49,8 @@ table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{pa
   </div>
 
   <div class="card">
-    <h3>Hourly breakdown</h3>
-    <div class="note">Each row uses Ethiopian local time and 12-hour AM/PM labels. It is the average number of human players per recorded game during that clock hour. The daily figure is the sum of the 24 hourly averages divided by 24, so hours with zero players contribute zero.</div>
+    <h3>Hourly breakdown · each round independently</h3>
+    <div class="note">Every single round is counted using its own timestamp → Ethiopian hour. No pre‑aggregated hourly snapshots are used. Rows show avg human players per game during that clock hour. The daily figure is the sum of 24 hourly averages divided by 24 (missing hours = 0).</div>
     <div style="overflow:auto">
       <table><thead><tr><th>Hour</th><th>Games</th><th>Total human players</th><th>Avg players / game</th><th>Contribution</th></tr></thead>
       <tbody id="rows"></tbody></table>
@@ -59,29 +60,28 @@ table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{pa
   <div class="card">
     <h3>Firebase data format</h3>
     <div class="note">
-      This dashboard connects directly to Firebase Realtime Database and reads <code>/analytics/gameHistory/YYYY-MM-DD/room_15/</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/</code> only when you press Analyze / Refresh. It does not subscribe to live room/player state. Each record needs a timestamp and a reliable <code>humanPlayerCount</code> (or a <code>players</code> object with <code>isBot: true</code> for bots).
-      <br><br>
-      Example: <code>/analytics/gameHistory/2026-10-11/room_15/12345</code> → <code>{ timestamp: 179..., hour: 14, humanPlayerCount: 40, botPlayerCount: 3 }</code>.<br><br><b>Note:</b> The dashboard can only analyze records that already exist in Firebase. It cannot recreate older rounds that were never saved.
+      This dashboard reads <code>/analytics/gameHistory/YYYY-MM-DD/room_15/</code> and <code>/room_30/</code> directly. Every round is fetched and processed individually, so no hourly aggregation is required. Each record should have a <code>timestamp</code> (or startedAt / createdAt) and a reliable <code>humanPlayerCount</code> — or a <code>players</code> object where bots have <code>isBot: true</code>.
+      <br><br><b>Timestamp handling:</b> Unix seconds and milliseconds are both accepted. Ethiopian hour is derived from the timestamp. A record with a valid timestamp will always be assigned to an hour; if <code>humanPlayerCount</code> is missing, it will be skipped (not counted as zero).
     </div>
   </div>
 </div>
 
 <script>
 const firebaseConfig={
- apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
- authDomain:"renewed-8fe38.firebaseapp.com",
- databaseURL:"https://render-e9e2-default-rtdb.firebaseio.com",
- projectId:"renewed-8fe38",
- storageBucket:"renewed-8fe38.firebasestorage.app",
- messagingSenderId:"741808375705",
- appId:"1:741808375705:web:c961f1664a0e17ad257508",
- measurementId:"G-04EW1D775E"
+  apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
+  authDomain:"renewed-8fe38.firebaseapp.com",
+  databaseURL:"https://render-e9e2-default-rtdb.firebaseio.com",
+  projectId:"renewed-8fe38",
+  storageBucket:"renewed-8fe38.firebasestorage.app",
+  messagingSenderId:"741808375705",
+  appId:"1:741808375705:web:c961f1664a0e17ad257508",
+  measurementId:"G-04EW1D775E"
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const $=id=>document.getElementById(id);
-const pad=n=>String(n).padStart(2,"0");
 const TZ="Africa/Addis_Ababa";
+
 function ethiopiaDate(d=new Date()){
   const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
   const v=Object.fromEntries(parts.map(p=>[p.type,p.value]));
@@ -91,54 +91,72 @@ $("fromDate").value=ethiopiaDate();
 $("toDate").value=ethiopiaDate();
 
 function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
+
 function asMillis(value){
   let n=Number(value||0);
   if(!Number.isFinite(n)||n<=0)return 0;
-  // Accept either Unix seconds or milliseconds.
   if(n<100000000000)n*=1000;
   return n;
 }
-function timestampOf(g){return asMillis(g && (g.timestamp||g.startedAt||g.createdAt||g.endedAt));}
-function hourFromRecord(g){
-  if(Number.isInteger(Number(g.hour)) && Number(g.hour)>=0 && Number(g.hour)<24) return Number(g.hour);
-  const ts=timestampOf(g);
-  if(!ts)return null;
-  const parts=new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ts));
-  return Number(parts.find(p=>p.type==="hour")?.value);
+function timestampOf(g){
+  if(!g) return 0;
+  // order: timestamp, startedAt, createdAt, endedAt, else any _ts fallback
+  return asMillis(g.timestamp || g.startedAt || g.createdAt || g.endedAt || g.ts || 0);
 }
+
+// derive Ethiopian hour from timestamp, fallback to g.hour only if no timestamp
+function hourFromRecord(g){
+  const ts=timestampOf(g);
+  if(ts){
+    const parts=new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ts));
+    return Number(parts.find(p=>p.type==="hour")?.value);
+  }
+  // no timestamp? check g.hour (assumed local Ethiopian hour)
+  if(g.hour!==undefined && Number.isInteger(Number(g.hour)) && Number(g.hour)>=0 && Number(g.hour)<24) 
+    return Number(g.hour);
+  return null; // no way to determine hour
+}
+
+// robust human count: never treat missing as 0
 function humanCount(g){
   if(!g)return 0;
-  if(g.humanPlayerCount!==undefined && Number.isFinite(Number(g.humanPlayerCount))) return Math.max(0,Number(g.humanPlayerCount));
-  if(g.botsExcluded===true && g.playerCount!==undefined && Number.isFinite(Number(g.playerCount))) return Math.max(0,Number(g.playerCount));
+  if(g.humanPlayerCount!==undefined && Number.isFinite(Number(g.humanPlayerCount))) 
+    return Math.max(0,Number(g.humanPlayerCount));
+  if(g.botsExcluded===true && g.playerCount!==undefined && Number.isFinite(Number(g.playerCount))) 
+    return Math.max(0,Number(g.playerCount));
   const players=g.players;
   if(players && typeof players==="object"){
     const values=Array.isArray(players)?players:Object.values(players);
     return values.filter(p=>p && p.isBot!==true && p.isBot!=="true" && p.bot!==true).length;
   }
-  return null; // Do not silently count a record as zero if it has no human count.
+  return null; // unknown
 }
+
 async function readPath(path){
   const snap=await db.ref(path).once("value");
   return snap.val()||{};
 }
+
 function dateKeysBetween(from,to){
   const keys=[];
   const start=new Date(from+"T12:00:00Z"), end=new Date(to+"T12:00:00Z");
   for(let d=new Date(start);d<=end;d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
   return keys;
 }
+
 function fmtHour(h){
   const start=new Date(Date.UTC(2020,0,1,h));
   const end=new Date(Date.UTC(2020,0,1,h+1));
   const f=d=>new Intl.DateTimeFormat("en-US",{timeZone:"UTC",hour:"numeric",hour12:true}).format(d);
   return `${f(start)}–${h===23?"12:00 AM":f(end)}`;
 }
+
 async function load(){
   const from=$("fromDate").value, to=$("toDate").value;
   if(!from||!to||from>to){setStatus("Choose a valid date range.","error");return;}
   const keys=dateKeysBetween(from,to);
   if(keys.length>366){setStatus("Please select a date range of 366 days or fewer.","error");return;}
-  setStatus("Fetching saved Firebase records…");
+  setStatus("Fetching every saved round from Firebase…");
   $("rows").innerHTML=""; 
   try{
     const room=$("room").value;
@@ -154,35 +172,62 @@ async function load(){
         }
       }
     }
+
+    // per-round processing: each round contributes to its own Ethiopian hour
     const hours=Array.from({length:24},(_,hour)=>({hour,games:0,total:0,unknown:0}));
     let skipped=0;
+    let totalRounds=all.length;
+
     all.forEach(g=>{
       const h=hourFromRecord(g), n=humanCount(g);
-      if(h===null || n===null){skipped++;return;}
-      hours[h].games++; hours[h].total+=n;
+      if(h===null || n===null){
+        skipped++;
+        return;
+      }
+      hours[h].games++;
+      hours[h].total += n;
     });
-    const hourly=hours.map(x=>x.games?x.total/x.games:0);
+
+    const hourly=hours.map(x=> x.games ? x.total/x.games : 0);
     const daily=hourly.reduce((a,b)=>a+b,0)/24;
     const peak=Math.max(...hourly);
+    const gamesWithData = hours.reduce((a,x)=>a+x.games,0);
+    const hoursWithData = hours.filter(x=>x.games>0).length;
+
     $("avg").textContent=daily.toFixed(2)+" (≈ "+Math.round(daily)+")";
     $("peak").textContent=peak.toFixed(2);
-    $("games").textContent=hours.reduce((a,x)=>a+x.games,0);
-    $("hours").textContent=hours.filter(x=>x.games>0).length+" / 24";
-    $("formula").innerHTML=`<strong>Hourly averages:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br><strong>Daily 24-hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br><span class="note">For a multi-day date range, this shows the mean of the hourly averages across the selected records; select one date for a single-day report.</span>`;
+    $("games").textContent=gamesWithData;
+    $("hours").textContent=hoursWithData+" / 24";
+
+    $("formula").innerHTML=`
+      <strong>Hourly averages (per round):</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br>
+      <strong>Daily 24‑hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br>
+      <span class="note">Processed <strong>${totalRounds}</strong> round records individually. Each round is assigned to its Ethiopian hour using its timestamp. ${skipped?skipped+" record(s) skipped because timestamp or human-player count was missing.":""}</span>
+    `;
+
     $("rows").innerHTML=hours.map(x=>{
       const a=x.games?x.total/x.games:0;
-      return `<tr><td>${fmtHour(x.hour)}</td><td>${x.games}</td><td>${x.total}</td><td>${a.toFixed(2)}</td><td>${a.toFixed(2)}</td></tr>`;
+      return `<tr>
+        <td>${fmtHour(x.hour)}</td>
+        <td>${x.games}</td>
+        <td>${x.total}</td>
+        <td>${a.toFixed(2)}</td>
+        <td>${a.toFixed(2)}</td>
+      </tr>`;
     }).join("");
-    setStatus(`Read ${all.length} saved records for ${from} to ${to} (${TZ}). ${skipped?skipped+" record(s) skipped because timestamp or human-player count was missing.":""} No live listeners are running.`, "ok");
+
+    setStatus(`✅ Read ${all.length} saved rounds for ${from} to ${to} (${TZ}). Each round was timestamp-processed. ${skipped?skipped+" round(s) skipped (missing timestamp or human count).":""} No live listeners.`, "ok");
+
   }catch(e){
     console.error(e);
     let message=e && e.message ? e.message : String(e);
-    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules/authentication for analytics/gameHistory.";
+    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules for analytics/gameHistory.";
     $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
     $("rows").innerHTML='<tr><td colspan="5">Could not load records.</td></tr>';
     setStatus("Could not read Firebase analytics: "+message,"error");
   }
 }
+
 $("load").onclick=load;
 $("refresh").onclick=load;
 </script>
