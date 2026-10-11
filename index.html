@@ -1,28 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-  <title>Winzo Player Analytics · round by round</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <style>
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#18213d,#080b16 70%);color:#eef2ff;font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh;padding:18px}
-    .app{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.title{font-size:25px;font-weight:900}.sub{color:#8e9ab8;font-size:12px;margin-top:4px}
-    .card{background:rgba(20,27,48,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;box-shadow:0 18px 50px #0005;margin-bottom:14px}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:150px}.field label{display:block;color:#8e9ab8;font-size:11px;margin-bottom:6px}.field input,.field select{width:100%;padding:11px;border-radius:12px;border:1px solid #303b59;background:#0d1324;color:#fff}
-    button{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#ffd75a,#efaa24);font-weight:800;color:#17120a;cursor:pointer}
-    .status{font-size:12px;color:#8e9ab8;margin-top:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:16px;border-radius:16px;background:#0d1324;border:1px solid #25304b}.metric b{display:block;font-size:28px;color:#ffd75a}.metric span{font-size:11px;color:#8e9ab8}
-    .formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
-    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
-    .note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
-    @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Winzo Player Analytics · round-by-round</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#18213d,#080b16 70%);color:#eef2ff;font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh;padding:18px}
+.app{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.title{font-size:25px;font-weight:900}.sub{color:#8e9ab8;font-size:12px;margin-top:4px}
+.card{background:rgba(20,27,48,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;box-shadow:0 18px 50px #0005;margin-bottom:14px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:150px}.field label{display:block;color:#8e9ab8;font-size:11px;margin-bottom:6px}.field input,.field select{width:100%;padding:11px;border-radius:12px;border:1px solid #303b59;background:#0d1324;color:#fff}
+button{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#ffd75a,#efaa24);font-weight:800;color:#17120a;cursor:pointer}
+button.ghost{background:#1a2440;color:#cfd8f0;border:1px solid #2b3860}
+.status{font-size:12px;color:#8e9ab8;margin-top:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:16px;border-radius:16px;background:#0d1324;border:1px solid #25304b}.metric b{display:block;font-size:28px;color:#ffd75a}.metric span{font-size:11px;color:#8e9ab8}
+.formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
+.note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
+pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding:12px;color:#b9c4e0;font-size:11px;line-height:1.5;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
 <div class="app">
   <div class="head">
-    <div><div class="title">📊 WINZO Player Analytics</div><div class="sub">Historical analysis · Human players only · Ethiopia time (Africa/Addis_Ababa)</div></div>
+    <div><div class="title">📊 WINZO Player Analytics</div><div class="sub">Round-by-round · Human players only · Ethiopia time (Africa/Addis_Ababa)</div></div>
     <button id="refresh">↻ Analyze / Refresh</button>
   </div>
 
@@ -32,6 +34,7 @@
       <div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
       <div class="field"><label>ROOM</label><select id="room"><option value="both">Both rooms</option><option value="room_15">15 Birr</option><option value="room_30">30 Birr</option></select></div>
       <button id="load">Load data</button>
+      <button id="diagnose" class="ghost">🔍 Diagnose Firebase</button>
     </div>
     <div id="status" class="status">Ready.</div>
   </div>
@@ -49,8 +52,8 @@
   </div>
 
   <div class="card">
-    <h3>Hourly breakdown · each round independently</h3>
-    <div class="note">Every single round is counted using its own timestamp → Ethiopian hour. No pre‑aggregated hourly snapshots are used. Rows show avg human players per game during that clock hour. The daily figure is the sum of 24 hourly averages divided by 24 (missing hours = 0).</div>
+    <h3>Hourly breakdown</h3>
+    <div class="note">Each round is read individually. Its Ethiopian hour comes from its own timestamp (or from the record key if the key is a Unix timestamp). The daily figure is the sum of the 24 hourly averages ÷ 24, so hours with zero players contribute zero.</div>
     <div style="overflow:auto">
       <table><thead><tr><th>Hour</th><th>Games</th><th>Total human players</th><th>Avg players / game</th><th>Contribution</th></tr></thead>
       <tbody id="rows"></tbody></table>
@@ -58,19 +61,29 @@
   </div>
 
   <div class="card">
-    <h3>Firebase data format</h3>
+    <h3>Diagnostics <span class="note">(click "Diagnose Firebase" above)</span></h3>
+    <pre id="debug" class="debug">No diagnostics yet. Press "Diagnose Firebase" to see what paths and records actually exist.</pre>
+  </div>
+
+  <div class="card">
+    <h3>Firebase data format the loader expects</h3>
     <div class="note">
-      This dashboard reads <code>/analytics/gameHistory/YYYY-MM-DD/room_15/</code> and <code>/room_30/</code> directly. Every round is fetched and processed individually, so no hourly aggregation is required. Each record should have a <code>timestamp</code> (or startedAt / createdAt) and a reliable <code>humanPlayerCount</code> — or a <code>players</code> object where bots have <code>isBot: true</code>.
-      <br><br><b>Timestamp handling:</b> Unix seconds and milliseconds are both accepted. Ethiopian hour is derived from the timestamp. A record with a valid timestamp will always be assigned to an hour; if <code>humanPlayerCount</code> is missing, it will be skipped (not counted as zero).
+      Primary paths: <code>/analytics/gameHistory/YYYY-MM-DD/room_15/&lt;gameId&gt;</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/&lt;gameId&gt;</code>.<br>
+      Fallback paths (used if the primary path is empty): <code>/gameHistory/…</code>, <code>/analytics/games/…</code>.
+      <br><br>
+      Each round should contain <b>at least one</b> of: <code>timestamp</code>, <code>startedAt</code>, <code>createdAt</code>, <code>endedAt</code>, <code>ts</code>, <code>time</code>, <code>hour</code> — or a Unix‑timestamp record key. It must also contain a human player count via <code>humanPlayerCount</code>, <code>humanCount</code>, <code>humans</code>, <code>humanPlayers</code>, <code>realPlayers</code>, <code>playerCount</code> (with <code>botsExcluded:true</code>), <code>totalPlayers</code>, or a <code>players</code> object where bots are marked <code>isBot: true</code>. Records missing both are counted as “skipped” rather than treated as zero.
     </div>
   </div>
 </div>
 
 <script>
+/* ============================================================
+   ✅ CORRECTED DATABASE URL — project is render-e9e2d
+   ============================================================ */
 const firebaseConfig={
   apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
   authDomain:"renewed-8fe38.firebaseapp.com",
-  databaseURL:"https://render-e9e2-default-rtdb.firebaseio.com",
+  databaseURL:"https://render-e9e2d-default-rtdb.firebaseio.com",
   projectId:"renewed-8fe38",
   storageBucket:"renewed-8fe38.firebasestorage.app",
   messagingSenderId:"741808375705",
@@ -91,57 +104,239 @@ $("fromDate").value=ethiopiaDate();
 $("toDate").value=ethiopiaDate();
 
 function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
+function dbg(line){ const el=$("debug"); el.textContent += "\n" + line; }
+function dbgReset(first){ $("debug").textContent = first || ""; }
 
-function asMillis(value){
-  let n=Number(value||0);
+/* ---------- timestamp helpers ---------- */
+function asMillis(v){
+  let n=Number(v||0);
   if(!Number.isFinite(n)||n<=0)return 0;
-  if(n<100000000000)n*=1000;
+  if(n<100000000000)n*=1000;         // seconds → ms
   return n;
 }
-function timestampOf(g){
-  if(!g) return 0;
-  // order: timestamp, startedAt, createdAt, endedAt, else any _ts fallback
-  return asMillis(g.timestamp || g.startedAt || g.createdAt || g.endedAt || g.ts || 0);
+function keyToMillis(key){
+  const n=Number(key);
+  if(!Number.isFinite(n)||n<=0) return 0;
+  if(n<100000000000) return n*1000;    // 10-digit seconds
+  if(n<10000000000000) return n;        // 13-digit ms
+  return 0;
 }
-
-// derive Ethiopian hour from timestamp, fallback to g.hour only if no timestamp
-function hourFromRecord(g){
-  const ts=timestampOf(g);
+function timestampOf(g, key){
+  if(g){
+    const cand = g.timestamp ?? g.startedAt ?? g.createdAt ?? g.endedAt ?? g.ts ?? g.time ?? g.roundTime ?? g.startTime;
+    const ms = asMillis(cand);
+    if(ms) return ms;
+  }
+  return keyToMillis(key);
+}
+function hourFromRecord(g, key){
+  const ts = timestampOf(g, key);
   if(ts){
-    const parts=new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ts));
-    return Number(parts.find(p=>p.type==="hour")?.value);
+    const parts = new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ts));
+    const hv = parts.find(p=>p.type==="hour")?.value;
+    if(hv!==undefined) return Number(hv);
   }
-  // no timestamp? check g.hour (assumed local Ethiopian hour)
-  if(g.hour!==undefined && Number.isInteger(Number(g.hour)) && Number(g.hour)>=0 && Number(g.hour)<24) 
-    return Number(g.hour);
-  return null; // no way to determine hour
+  const raw = g && g.hour;
+  if(raw!==undefined && Number.isInteger(Number(raw)) && Number(raw)>=0 && Number(raw)<24) return Number(raw);
+  return null;
 }
 
-// robust human count: never treat missing as 0
+/* ---------- human count: never silently zero ---------- */
 function humanCount(g){
-  if(!g)return 0;
-  if(g.humanPlayerCount!==undefined && Number.isFinite(Number(g.humanPlayerCount))) 
-    return Math.max(0,Number(g.humanPlayerCount));
-  if(g.botsExcluded===true && g.playerCount!==undefined && Number.isFinite(Number(g.playerCount))) 
-    return Math.max(0,Number(g.playerCount));
-  const players=g.players;
-  if(players && typeof players==="object"){
-    const values=Array.isArray(players)?players:Object.values(players);
-    return values.filter(p=>p && p.isBot!==true && p.isBot!=="true" && p.bot!==true).length;
+  if(!g || typeof g!=="object") return null;
+  const numericKeys = ["humanPlayerCount","humanCount","humans","humanPlayers","realPlayers","realCount"];
+  for(const k of numericKeys){
+    if(g[k]!==undefined && Number.isFinite(Number(g[k]))) return Math.max(0,Number(g[k]));
   }
-  return null; // unknown
+  if(g.botsExcluded===true){
+    const pk = g.playerCount ?? g.totalPlayers ?? g.count;
+    if(pk!==undefined && Number.isFinite(Number(pk))) return Math.max(0,Number(pk));
+  }
+  const players = g.players || g.playerList || g.playerMap;
+  if(players && typeof players==="object"){
+    const values = Array.isArray(players)?players:Object.values(players);
+    const humans = values.filter(p=>p && typeof p==="object"
+      && p.isBot!==true && p.isBot!=="true" && p.isBot!==1
+      && p.bot!==true && p.bot!=="true" && p.bot!==1);
+    if(values.length) return humans.length;
+  }
+  const fallback = g.playerCount ?? g.totalPlayers ?? g.count;
+  if(fallback!==undefined && Number.isFinite(Number(fallback)) && !players) return Math.max(0,Number(fallback));
+  return null;
 }
 
+/* ---------- reading ---------- */
 async function readPath(path){
-  const snap=await db.ref(path).once("value");
-  return snap.val()||{};
+  const snap = await db.ref(path).once("value");
+  return snap.exists()? snap.val() : null;
 }
 
 function dateKeysBetween(from,to){
   const keys=[];
   const start=new Date(from+"T12:00:00Z"), end=new Date(to+"T12:00:00Z");
-  for(let d=new Date(start);d<=end;d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
+  for(let d=new Date(start); d<=end; d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
   return keys;
+}
+
+function flattenRounds(node, date, room){
+  if(!node || typeof node!=="object") return [];
+  const looksLikeSingleGame = node.timestamp!==undefined || node.startedAt!==undefined ||
+    node.humanPlayerCount!==undefined || node.humanCount!==undefined ||
+    node.players!==undefined || node.playerCount!==undefined;
+  if(looksLikeSingleGame){
+    return [{...node, _date:date, _room:room, _id:"(single)"}];
+  }
+  const out=[];
+  for(const [id,g] of Object.entries(node)){
+    if(g && typeof g==="object" && !Array.isArray(g)){
+      out.push({...g, _date:date, _room:room, _id:id});
+    }
+  }
+  return out;
+}
+
+async function collectRounds(from, to, roomsWanted){
+  const all=[];
+  const keys = dateKeysBetween(from,to);
+  const trace = [];
+  for(const date of keys){
+    for(const base of ["analytics/gameHistory","gameHistory","analytics/games"]){
+      for(const r of roomsWanted){
+        const path = `${base}/${date}/${r}`;
+        let node=null;
+        try{ node = await readPath(path); }catch(e){ trace.push(`${path} → read error (${e.message})`); continue; }
+        if(!node){ continue; }
+        const rounds = flattenRounds(node, date, r);
+        if(rounds.length){
+          all.push(...rounds);
+          trace.push(`${path} → ${rounds.length} round(s)`);
+        }
+      }
+    }
+  }
+  return {all, trace, datesChecked:keys};
+}
+
+/* ---------- main load ---------- */
+async function load(){
+  const from=$("fromDate").value, to=$("toDate").value;
+  if(!from||!to||from>to){setStatus("Choose a valid date range.","error");return;}
+  const keys=dateKeysBetween(from,to);
+  if(keys.length>366){setStatus("Please select a date range of 366 days or fewer.","error");return;}
+
+  setStatus("Fetching every saved round from Firebase…");
+  $("rows").innerHTML="";
+  dbgReset(`Fetching ${keys.length} date(s) · ${from} → ${to} · TZ=${TZ}`);
+  dbg(`Database: ${firebaseConfig.databaseURL}`);
+
+  try{
+    const room=$("room").value;
+    const rooms = room==="both" ? ["room_15","room_30"] : [room];
+    const {all, trace} = await collectRounds(from, to, rooms);
+
+    trace.forEach(t=>dbg("  · "+t));
+    dbg(`Total round objects collected: ${all.length}`);
+
+    if(all.length===0){
+      dbg("No rounds found at the primary paths. Running discovery…");
+      const discovered = await discover();
+      dbg(discovered);
+      $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
+      $("rows").innerHTML='<tr><td colspan="5">No rounds found. See Diagnostics below.</td></tr>';
+      $("formula").textContent="No data. Check the Diagnostics panel.";
+      setStatus("No saved rounds matched your date range / path. See Diagnostics panel.","error");
+      return;
+    }
+
+    const sample = all[0];
+    dbg(`Sample round (key=${sample._id}) fields: ${Object.keys(sample).filter(k=>!k.startsWith('_')).join(', ')}`);
+    dbg(`Sample → hour=${hourFromRecord(sample, sample._id)}  humanCount=${humanCount(sample)}`);
+
+    const hours=Array.from({length:24},(_,hour)=>({hour,games:0,total:0}));
+    let skipped=0;
+    for(const g of all){
+      const h=hourFromRecord(g, g._id);
+      const n=humanCount(g);
+      if(h===null || n===null){ skipped++; continue; }
+      hours[h].games++;
+      hours[h].total+=n;
+    }
+
+    const hourly=hours.map(x=>x.games?x.total/x.games:0);
+    const daily=hourly.reduce((a,b)=>a+b,0)/24;
+    const peak=Math.max(...hourly);
+
+    $("avg").textContent=daily.toFixed(2)+" (≈ "+Math.round(daily)+")";
+    $("peak").textContent=peak.toFixed(2);
+    $("games").textContent=hours.reduce((a,x)=>a+x.games,0);
+    $("hours").textContent=hours.filter(x=>x.games>0).length+" / 24";
+
+    $("formula").innerHTML=`<strong>Hourly averages:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br><strong>Daily 24-hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br><span class="note">Processed ${all.length} round(s) individually. ${skipped} round(s) skipped (no timestamp/hour or no human count).</span>`;
+
+    $("rows").innerHTML=hours.map(x=>{
+      const a=x.games?x.total/x.games:0;
+      return `<tr><td>${fmtHour(x.hour)}</td><td>${x.games}</td><td>${x.total}</td><td>${a.toFixed(2)}</td><td>${a.toFixed(2)}</td></tr>`;
+    }).join("");
+
+    setStatus(`✅ Read ${all.length} saved round(s) for ${from} → ${to}. ${skipped?skipped+" skipped.":"All usable."} No live listeners.`,"ok");
+  }catch(e){
+    console.error(e);
+    let message=e && e.message ? e.message : String(e);
+    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules for analytics/gameHistory.";
+    $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
+    $("rows").innerHTML='<tr><td colspan="5">Could not load records.</td></tr>';
+    setStatus("Could not read Firebase analytics: "+message,"error");
+    dbg("ERROR: "+message);
+  }
+}
+
+/* ---------- diagnostics ---------- */
+async function discover(){
+  const lines=[];
+  const rootsToTry=["analytics/gameHistory","gameHistory","analytics/games","analytics","rooms","games"];
+  for(const root of rootsToTry){
+    try{
+      const snap=await db.ref(root).orderByKey().limitToLast(3).once("value");
+      if(!snap.exists()){ lines.push(`${root} → (empty)`); continue; }
+      const val=snap.val();
+      const keys=Object.keys(val);
+      lines.push(`${root} → ${keys.length} top-level key(s): ${keys.slice(0,5).join(", ")}${keys.length>5?"…":""}`);
+      for(const k of keys.slice(0,2)){
+        const child=val[k];
+        if(child && typeof child==="object"){
+          const childKeys=Object.keys(child);
+          lines.push(`    ${root}/${k} → [${childKeys.slice(0,6).join(", ")}${childKeys.length>6?"…":""}]`);
+          const firstRoom=childKeys[0];
+          if(child[firstRoom] && typeof child[firstRoom]==="object"){
+            const games=Object.keys(child[firstRoom]);
+            lines.push(`        ${root}/${k}/${firstRoom} → ${games.length} entr(ies). First key=${games[0]}`);
+            const firstGame=child[firstRoom][games[0]];
+            if(firstGame && typeof firstGame==="object"){
+              lines.push(`        Sample fields: ${Object.keys(firstGame).slice(0,14).join(", ")}`);
+              lines.push(`        Sample values: ${JSON.stringify(firstGame).slice(0,300)}`);
+            }
+          }
+        }
+      }
+    }catch(e){
+      lines.push(`${root} → error: ${e.message}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+async function diagnose(){
+  dbgReset("Running Firebase diagnostics…");
+  dbg(`Database: ${firebaseConfig.databaseURL}`);
+  setStatus("Diagnosing Firebase…");
+  try{
+    const out = await discover();
+    dbg(out);
+    setStatus("Diagnostics complete. See Diagnostics panel below.","ok");
+  }catch(e){
+    dbg("Diagnostics failed: "+e.message);
+    setStatus("Diagnostics failed: "+e.message,"error");
+  }
 }
 
 function fmtHour(h){
@@ -151,85 +346,9 @@ function fmtHour(h){
   return `${f(start)}–${h===23?"12:00 AM":f(end)}`;
 }
 
-async function load(){
-  const from=$("fromDate").value, to=$("toDate").value;
-  if(!from||!to||from>to){setStatus("Choose a valid date range.","error");return;}
-  const keys=dateKeysBetween(from,to);
-  if(keys.length>366){setStatus("Please select a date range of 366 days or fewer.","error");return;}
-  setStatus("Fetching every saved round from Firebase…");
-  $("rows").innerHTML=""; 
-  try{
-    const room=$("room").value;
-    const rooms=room==="both"?["room_15","room_30"]:[room];
-    const all=[];
-    for(const date of keys){
-      for(const r of rooms){
-        const data=await readPath(`analytics/gameHistory/${date}/${r}`);
-        if(data && typeof data==="object"){
-          Object.entries(data).forEach(([id,g])=>{
-            if(g && typeof g==="object") all.push({...g,_date:date,_room:r,_id:id});
-          });
-        }
-      }
-    }
-
-    // per-round processing: each round contributes to its own Ethiopian hour
-    const hours=Array.from({length:24},(_,hour)=>({hour,games:0,total:0,unknown:0}));
-    let skipped=0;
-    let totalRounds=all.length;
-
-    all.forEach(g=>{
-      const h=hourFromRecord(g), n=humanCount(g);
-      if(h===null || n===null){
-        skipped++;
-        return;
-      }
-      hours[h].games++;
-      hours[h].total += n;
-    });
-
-    const hourly=hours.map(x=> x.games ? x.total/x.games : 0);
-    const daily=hourly.reduce((a,b)=>a+b,0)/24;
-    const peak=Math.max(...hourly);
-    const gamesWithData = hours.reduce((a,x)=>a+x.games,0);
-    const hoursWithData = hours.filter(x=>x.games>0).length;
-
-    $("avg").textContent=daily.toFixed(2)+" (≈ "+Math.round(daily)+")";
-    $("peak").textContent=peak.toFixed(2);
-    $("games").textContent=gamesWithData;
-    $("hours").textContent=hoursWithData+" / 24";
-
-    $("formula").innerHTML=`
-      <strong>Hourly averages (per round):</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br>
-      <strong>Daily 24‑hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br>
-      <span class="note">Processed <strong>${totalRounds}</strong> round records individually. Each round is assigned to its Ethiopian hour using its timestamp. ${skipped?skipped+" record(s) skipped because timestamp or human-player count was missing.":""}</span>
-    `;
-
-    $("rows").innerHTML=hours.map(x=>{
-      const a=x.games?x.total/x.games:0;
-      return `<tr>
-        <td>${fmtHour(x.hour)}</td>
-        <td>${x.games}</td>
-        <td>${x.total}</td>
-        <td>${a.toFixed(2)}</td>
-        <td>${a.toFixed(2)}</td>
-      </tr>`;
-    }).join("");
-
-    setStatus(`✅ Read ${all.length} saved rounds for ${from} to ${to} (${TZ}). Each round was timestamp-processed. ${skipped?skipped+" round(s) skipped (missing timestamp or human count).":""} No live listeners.`, "ok");
-
-  }catch(e){
-    console.error(e);
-    let message=e && e.message ? e.message : String(e);
-    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules for analytics/gameHistory.";
-    $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
-    $("rows").innerHTML='<tr><td colspan="5">Could not load records.</td></tr>';
-    setStatus("Could not read Firebase analytics: "+message,"error");
-  }
-}
-
 $("load").onclick=load;
 $("refresh").onclick=load;
+$("diagnose").onclick=diagnose;
 </script>
 </body>
 </html>
