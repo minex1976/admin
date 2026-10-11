@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Winzo Player Analytics · round-by-round</title>
+<title>Winzo Player Analytics</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
@@ -19,66 +19,158 @@ table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{pa
 .note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
 pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding:12px;color:#b9c4e0;font-size:11px;line-height:1.5;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
+
+/* --- Tabs --- */
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:12px;background:#141b30;border:1px solid #25304b;color:#9ba7c2;font-weight:700;cursor:pointer;font-size:14px;transition:all .15s}
+.tab:hover{background:#1a2440;color:#eef2ff}
+.tab.active{background:linear-gradient(135deg,#ffd75a,#efaa24);color:#17120a;border-color:transparent}
+.tabpane{display:none}
+.tabpane.active{display:block}
+
+/* --- Referrals --- */
+.ref-list{margin-top:10px}
+.referrer-block{background:#0d1324;border:1px solid #25304b;border-radius:14px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+.referrer-block:hover{border-color:#3a4870}
+.referrer-head{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;user-select:none}
+.referrer-head:hover{background:#111a30}
+.caret{color:#ffd75a;font-size:12px;transition:transform .15s;display:inline-block;width:12px}
+.referrer-block.open .caret{transform:rotate(90deg)}
+.referrer-name{flex:1;font-weight:700;color:#eef2ff;word-break:break-word}
+.referrer-id{font-size:11px;color:#8e9ab8;font-family:monospace}
+.referrer-count{background:#1a2440;color:#ffd75a;padding:4px 12px;border-radius:10px;font-weight:800;font-size:13px;min-width:52px;text-align:center}
+.referrer-body{padding:0 14px 12px 38px;border-top:1px solid #1c2540}
+.referred-item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #16203a;font-size:13px}
+.referred-item:last-child{border-bottom:none}
+.referred-item .dot{width:6px;height:6px;border-radius:50%;background:#4a5b85;flex-shrink:0}
+.referred-item .r-name{flex:1;color:#d8def0;word-break:break-word}
+.referred-item .r-id{color:#8e9ab8;font-family:monospace;font-size:11px}
+.referred-item .r-ts{color:#8e9ab8;font-size:11px;font-family:monospace}
+.search-box{position:relative}
+.search-box input{padding-left:34px}
+.search-box::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.7;pointer-events:none}
+.empty-msg{color:#8e9ab8;text-align:center;padding:30px;font-size:13px}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="head">
-    <div><div class="title">📊 WINZO Player Analytics</div><div class="sub">Round-by-round · Human players only · Ethiopia time (Africa/Addis_Ababa)</div></div>
-    <button id="refresh">↻ Analyze / Refresh</button>
+    <div><div class="title">📊 WINZO Player Analytics</div><div class="sub">Historical analysis · Human players only · Ethiopia time (Africa/Addis_Ababa)</div></div>
+    <button id="refresh">↻ Refresh current tab</button>
   </div>
 
-  <div class="card">
-    <div class="controls">
-      <div class="field"><label>FROM DATE (ETHIOPIA)</label><input id="fromDate" type="date"></div>
-      <div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
-      <div class="field"><label>ROOM</label><select id="room"><option value="both">Both rooms</option><option value="room_15">15 Birr</option><option value="room_30">30 Birr</option></select></div>
-      <button id="load">Load data</button>
-      <button id="diagnose" class="ghost">🔍 Diagnose Firebase</button>
+  <div class="tabs">
+    <button class="tab active" data-tab="analytics">📊 Analytics</button>
+    <button class="tab" data-tab="referred">👥 Referred</button>
+  </div>
+
+  <!-- ============ ANALYTICS TAB ============ -->
+  <div id="tab-analytics" class="tabpane active">
+    <div class="card">
+      <div class="controls">
+        <div class="field"><label>FROM DATE (ETHIOPIA)</label><input id="fromDate" type="date"></div>
+        <div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
+        <div class="field"><label>ROOM</label><select id="room"><option value="both">Both rooms</option><option value="room_15">15 Birr</option><option value="room_30">30 Birr</option></select></div>
+        <button id="load">Load data</button>
+        <button id="diagnose" class="ghost">🔍 Diagnose Firebase</button>
+      </div>
+      <div id="status" class="status">Ready.</div>
     </div>
-    <div id="status" class="status">Ready.</div>
-  </div>
 
-  <div class="grid">
-    <div class="metric"><b id="avg">—</b><span>Average players / game · 24h</span></div>
-    <div class="metric"><b id="peak">—</b><span>Peak hourly average</span></div>
-    <div class="metric"><b id="games">—</b><span>Human games recorded</span></div>
-    <div class="metric"><b id="hours">—</b><span>Hours with data</span></div>
-  </div>
+    <div class="grid">
+      <div class="metric"><b id="avg">—</b><span>Average players / game · 24h</span></div>
+      <div class="metric"><b id="peak">—</b><span>Peak hourly average</span></div>
+      <div class="metric"><b id="games">—</b><span>Human games recorded</span></div>
+      <div class="metric"><b id="hours">—</b><span>Hours with data</span></div>
+    </div>
 
-  <div class="card">
-    <h3>Daily calculation</h3>
-    <div id="formula" class="formula">Select a date and load data.</div>
-  </div>
+    <div class="card">
+      <h3>Daily calculation</h3>
+      <div id="formula" class="formula">Select a date and load data.</div>
+    </div>
 
-  <div class="card">
-    <h3>Hourly breakdown</h3>
-    <div class="note">Each round is read individually. Its Ethiopian hour comes from its own timestamp (or from the record key if the key is a Unix timestamp). The daily figure is the sum of the 24 hourly averages ÷ 24, so hours with zero players contribute zero.</div>
-    <div style="overflow:auto">
-      <table><thead><tr><th>Hour</th><th>Games</th><th>Total human players</th><th>Avg players / game</th><th>Contribution</th></tr></thead>
-      <tbody id="rows"></tbody></table>
+    <div class="card">
+      <h3>Hourly breakdown</h3>
+      <div class="note">Each round is read individually. Its Ethiopian hour comes from its own timestamp (or from the record key if the key is a Unix timestamp). The daily figure is the sum of the 24 hourly averages ÷ 24, so hours with zero players contribute zero.</div>
+      <div style="overflow:auto">
+        <table><thead><tr><th>Hour</th><th>Games</th><th>Total human players</th><th>Avg players / game</th><th>Contribution</th></tr></thead>
+        <tbody id="rows"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Diagnostics <span class="note">(click "Diagnose Firebase" above)</span></h3>
+      <pre id="debug" class="debug">No diagnostics yet. Press "Diagnose Firebase" to see what paths and records actually exist.</pre>
+    </div>
+
+    <div class="card">
+      <h3>Firebase data format the loader expects</h3>
+      <div class="note">
+        Primary paths: <code>/analytics/gameHistory/YYYY-MM-DD/room_15/&lt;gameId&gt;</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/&lt;gameId&gt;</code>.<br>
+        Fallback paths: <code>/gameHistory/…</code>, <code>/analytics/games/…</code>.
+        <br><br>
+        Each round should contain <b>at least one</b> of: <code>timestamp</code>, <code>startedAt</code>, <code>createdAt</code>, <code>endedAt</code>, <code>ts</code>, <code>time</code>, <code>hour</code> — or a Unix‑timestamp record key. It must also contain a human player count via <code>humanPlayerCount</code>, <code>humanCount</code>, <code>humans</code>, <code>humanPlayers</code>, <code>realPlayers</code>, <code>playerCount</code> (with <code>botsExcluded:true</code>), <code>totalPlayers</code>, or a <code>players</code> object where bots are marked <code>isBot: true</code>.
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Diagnostics <span class="note">(click "Diagnose Firebase" above)</span></h3>
-    <pre id="debug" class="debug">No diagnostics yet. Press "Diagnose Firebase" to see what paths and records actually exist.</pre>
-  </div>
+  <!-- ============ REFERRED TAB ============ -->
+  <div id="tab-referred" class="tabpane">
+    <div class="card">
+      <div class="controls">
+        <div class="field search-box"><label>SEARCH REFERRER</label><input id="refSearch" type="text" placeholder="Name or ID…"></div>
+        <div class="field"><label>SORT BY</label>
+          <select id="refSort">
+            <option value="count">Most referred first</option>
+            <option value="name">Referrer name (A→Z)</option>
+            <option value="recent">Most recent referral first</option>
+          </select>
+        </div>
+        <button id="loadRef">Load referrals</button>
+        <button id="diagRef" class="ghost">🔍 Diagnose Referrals</button>
+      </div>
+      <div id="refStatus" class="status">Ready.</div>
+    </div>
 
-  <div class="card">
-    <h3>Firebase data format the loader expects</h3>
-    <div class="note">
-      Primary paths: <code>/analytics/gameHistory/YYYY-MM-DD/room_15/&lt;gameId&gt;</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/&lt;gameId&gt;</code>.<br>
-      Fallback paths (used if the primary path is empty): <code>/gameHistory/…</code>, <code>/analytics/games/…</code>.
-      <br><br>
-      Each round should contain <b>at least one</b> of: <code>timestamp</code>, <code>startedAt</code>, <code>createdAt</code>, <code>endedAt</code>, <code>ts</code>, <code>time</code>, <code>hour</code> — or a Unix‑timestamp record key. It must also contain a human player count via <code>humanPlayerCount</code>, <code>humanCount</code>, <code>humans</code>, <code>humanPlayers</code>, <code>realPlayers</code>, <code>playerCount</code> (with <code>botsExcluded:true</code>), <code>totalPlayers</code>, or a <code>players</code> object where bots are marked <code>isBot: true</code>. Records missing both are counted as “skipped” rather than treated as zero.
+    <div class="grid">
+      <div class="metric"><b id="refReferrers">—</b><span>Total referrers</span></div>
+      <div class="metric"><b id="refReferred">—</b><span>Total referred players</span></div>
+      <div class="metric"><b id="refTop">—</b><span>Top referrer (count)</span></div>
+      <div class="metric"><b id="refAvg">—</b><span>Avg referrals per referrer</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Referrers &amp; their referred players</h3>
+      <div class="note" style="margin-bottom:12px">Click a referrer to expand and see the players they referred. Names are resolved from <code>/users</code>, <code>/players</code> or <code>/profiles</code> when available; otherwise the raw ID is shown.</div>
+      <div id="refList" class="ref-list"><div class="empty-msg">Press "Load referrals" to fetch.</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Referral diagnostics <span class="note">(click "Diagnose Referrals" above)</span></h3>
+      <pre id="refDebug" class="debug">No diagnostics yet.</pre>
+    </div>
+
+    <div class="card">
+      <h3>Referral data format the loader expects</h3>
+      <div class="note">
+        The loader tries these structures in order and stops at the first one that exists:
+        <br><br>
+        <b>1. Referral map</b> — <code>/referrals/&lt;referrerId&gt;/&lt;referredId&gt;</code> = <code>true</code> or <code>{ name, timestamp, … }</code><br>
+        Same idea also tried at <code>/userReferrals</code>, <code>/referralData</code>, <code>/referralTree</code>, <code>/invites</code>.
+        <br><br>
+        <b>2. Per‑user <code>referredBy</code></b> — <code>/users/&lt;userId&gt;/referredBy</code> = <code>referrerId</code> or <code>{ referrerId, timestamp }</code>. The loader inverts this to build the referrer → referred list. Same idea also tried at <code>/players/&lt;id&gt;/referredBy</code> and <code>/profiles/&lt;id&gt;/referredBy</code>.
+        <br><br>
+        <b>Names</b> are looked up from <code>/users/&lt;id&gt;/name</code> (or <code>/username</code>, <code>/displayName</code>) and the same at <code>/players</code> and <code>/profiles</code>.
+        <br><br>
+        If your structure is different, click <b>Diagnose Referrals</b> and copy what it prints — you can then tell me the shape and I'll wire it up.
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 /* ============================================================
-   ✅ CORRECTED DATABASE URL — project is render-e9e2d
+   Firebase — correct database URL for project render-e9e2d
    ============================================================ */
 const firebaseConfig={
   apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
@@ -95,6 +187,21 @@ const db=firebase.database();
 const $=id=>document.getElementById(id);
 const TZ="Africa/Addis_Ababa";
 
+/* ============================================================
+   Tabs
+   ============================================================ */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tabpane").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("tab-"+t.dataset.tab).classList.add("active");
+  };
+});
+
+/* ============================================================
+   Date helpers (shared)
+   ============================================================ */
 function ethiopiaDate(d=new Date()){
   const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
   const v=Object.fromEntries(parts.map(p=>[p.type,p.value]));
@@ -103,24 +210,55 @@ function ethiopiaDate(d=new Date()){
 $("fromDate").value=ethiopiaDate();
 $("toDate").value=ethiopiaDate();
 
-function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
-function dbg(line){ const el=$("debug"); el.textContent += "\n" + line; }
-function dbgReset(first){ $("debug").textContent = first || ""; }
+function dateKeysBetween(from,to){
+  const keys=[];
+  const start=new Date(from+"T12:00:00Z"), end=new Date(to+"T12:00:00Z");
+  for(let d=new Date(start); d<=end; d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
+  return keys;
+}
+function fmtDate(ms){
+  if(!ms) return "—";
+  try{
+    return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(ms));
+  }catch(e){ return "—"; }
+}
+function fmtDateTime(ms){
+  if(!ms) return "—";
+  try{
+    return new Intl.DateTimeFormat("en-GB",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(ms));
+  }catch(e){ return "—"; }
+}
 
-/* ---------- timestamp helpers ---------- */
+/* ============================================================
+   Shared: asMillis, keyToMillis, readPath
+   ============================================================ */
 function asMillis(v){
   let n=Number(v||0);
   if(!Number.isFinite(n)||n<=0)return 0;
-  if(n<100000000000)n*=1000;         // seconds → ms
+  if(n<100000000000)n*=1000;
   return n;
 }
 function keyToMillis(key){
   const n=Number(key);
   if(!Number.isFinite(n)||n<=0) return 0;
-  if(n<100000000000) return n*1000;    // 10-digit seconds
-  if(n<10000000000000) return n;        // 13-digit ms
+  if(n<100000000000) return n*1000;
+  if(n<10000000000000) return n;
   return 0;
 }
+async function readPath(path){
+  const snap = await db.ref(path).once("value");
+  return snap.exists()? snap.val() : null;
+}
+
+/* ============================================================
+   ============================================================
+   ANALYTICS TAB  (unchanged behaviour)
+   ============================================================
+   ============================================================ */
+function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
+function dbg(line){ const el=$("debug"); el.textContent += "\n" + line; }
+function dbgReset(first){ $("debug").textContent = first || ""; }
+
 function timestampOf(g, key){
   if(g){
     const cand = g.timestamp ?? g.startedAt ?? g.createdAt ?? g.endedAt ?? g.ts ?? g.time ?? g.roundTime ?? g.startTime;
@@ -140,8 +278,6 @@ function hourFromRecord(g, key){
   if(raw!==undefined && Number.isInteger(Number(raw)) && Number(raw)>=0 && Number(raw)<24) return Number(raw);
   return null;
 }
-
-/* ---------- human count: never silently zero ---------- */
 function humanCount(g){
   if(!g || typeof g!=="object") return null;
   const numericKeys = ["humanPlayerCount","humanCount","humans","humanPlayers","realPlayers","realCount"];
@@ -164,60 +300,40 @@ function humanCount(g){
   if(fallback!==undefined && Number.isFinite(Number(fallback)) && !players) return Math.max(0,Number(fallback));
   return null;
 }
-
-/* ---------- reading ---------- */
-async function readPath(path){
-  const snap = await db.ref(path).once("value");
-  return snap.exists()? snap.val() : null;
-}
-
-function dateKeysBetween(from,to){
-  const keys=[];
-  const start=new Date(from+"T12:00:00Z"), end=new Date(to+"T12:00:00Z");
-  for(let d=new Date(start); d<=end; d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
-  return keys;
-}
-
 function flattenRounds(node, date, room){
   if(!node || typeof node!=="object") return [];
   const looksLikeSingleGame = node.timestamp!==undefined || node.startedAt!==undefined ||
     node.humanPlayerCount!==undefined || node.humanCount!==undefined ||
     node.players!==undefined || node.playerCount!==undefined;
-  if(looksLikeSingleGame){
-    return [{...node, _date:date, _room:room, _id:"(single)"}];
-  }
+  if(looksLikeSingleGame) return [{...node, _date:date, _room:room, _id:"(single)"}];
   const out=[];
   for(const [id,g] of Object.entries(node)){
-    if(g && typeof g==="object" && !Array.isArray(g)){
-      out.push({...g, _date:date, _room:room, _id:id});
-    }
+    if(g && typeof g==="object" && !Array.isArray(g)) out.push({...g, _date:date, _room:room, _id:id});
   }
   return out;
 }
-
 async function collectRounds(from, to, roomsWanted){
-  const all=[];
-  const keys = dateKeysBetween(from,to);
-  const trace = [];
-  for(const date of keys){
+  const all=[], trace=[];
+  for(const date of dateKeysBetween(from,to)){
     for(const base of ["analytics/gameHistory","gameHistory","analytics/games"]){
       for(const r of roomsWanted){
         const path = `${base}/${date}/${r}`;
         let node=null;
         try{ node = await readPath(path); }catch(e){ trace.push(`${path} → read error (${e.message})`); continue; }
-        if(!node){ continue; }
+        if(!node) continue;
         const rounds = flattenRounds(node, date, r);
-        if(rounds.length){
-          all.push(...rounds);
-          trace.push(`${path} → ${rounds.length} round(s)`);
-        }
+        if(rounds.length){ all.push(...rounds); trace.push(`${path} → ${rounds.length} round(s)`); }
       }
     }
   }
-  return {all, trace, datesChecked:keys};
+  return {all, trace};
 }
-
-/* ---------- main load ---------- */
+function fmtHour(h){
+  const start=new Date(Date.UTC(2020,0,1,h));
+  const end=new Date(Date.UTC(2020,0,1,h+1));
+  const f=d=>new Intl.DateTimeFormat("en-US",{timeZone:"UTC",hour:"numeric",hour12:true}).format(d);
+  return `${f(start)}–${h===23?"12:00 AM":f(end)}`;
+}
 async function load(){
   const from=$("fromDate").value, to=$("toDate").value;
   if(!from||!to||from>to){setStatus("Choose a valid date range.","error");return;}
@@ -238,8 +354,7 @@ async function load(){
     dbg(`Total round objects collected: ${all.length}`);
 
     if(all.length===0){
-      dbg("No rounds found at the primary paths. Running discovery…");
-      const discovered = await discover();
+      const discovered = await discoverAnalytics();
       dbg(discovered);
       $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
       $("rows").innerHTML='<tr><td colspan="5">No rounds found. See Diagnostics below.</td></tr>';
@@ -261,7 +376,6 @@ async function load(){
       hours[h].games++;
       hours[h].total+=n;
     }
-
     const hourly=hours.map(x=>x.games?x.total/x.games:0);
     const daily=hourly.reduce((a,b)=>a+b,0)/24;
     const peak=Math.max(...hourly);
@@ -282,16 +396,14 @@ async function load(){
   }catch(e){
     console.error(e);
     let message=e && e.message ? e.message : String(e);
-    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules for analytics/gameHistory.";
+    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules.";
     $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
     $("rows").innerHTML='<tr><td colspan="5">Could not load records.</td></tr>';
     setStatus("Could not read Firebase analytics: "+message,"error");
     dbg("ERROR: "+message);
   }
 }
-
-/* ---------- diagnostics ---------- */
-async function discover(){
+async function discoverAnalytics(){
   const lines=[];
   const rootsToTry=["analytics/gameHistory","gameHistory","analytics/games","analytics","rooms","games"];
   for(const root of rootsToTry){
@@ -318,37 +430,319 @@ async function discover(){
           }
         }
       }
-    }catch(e){
-      lines.push(`${root} → error: ${e.message}`);
-    }
+    }catch(e){ lines.push(`${root} → error: ${e.message}`); }
   }
   return lines.join("\n");
 }
-
 async function diagnose(){
   dbgReset("Running Firebase diagnostics…");
   dbg(`Database: ${firebaseConfig.databaseURL}`);
   setStatus("Diagnosing Firebase…");
+  try{ dbg(await discoverAnalytics()); setStatus("Diagnostics complete.","ok"); }
+  catch(e){ dbg("Diagnostics failed: "+e.message); setStatus("Diagnostics failed.","error"); }
+}
+
+/* ============================================================
+   ============================================================
+   REFERRED TAB
+   ============================================================
+   ============================================================ */
+const refStatusEl=()=>$("refStatus");
+function setRefStatus(t,c=""){ $("refStatus").textContent=t; $("refStatus").className="status "+c; }
+function refDbg(line){ const el=$("refDebug"); el.textContent += "\n" + line; }
+function refDbgReset(first){ $("refDebug").textContent = first || ""; }
+
+let refData = { referrers:{}, source:"(none)" };  // { referrerId: { name, referred: [{id, name, ts}] } }
+
+/* --- Name cache: resolve a user/player id → display name --- */
+const nameCache = new Map();     // id → name
+const nameMisses = new Set();
+
+async function resolveName(id, hints){
+  if(!id) return null;
+  if(nameCache.has(id)) return nameCache.get(id);
+  if(nameMisses.has(id)) return null;
+  // Try hints passed in the record first
+  if(hints && typeof hints==="object"){
+    const n = hints.name ?? hints.username ?? hints.displayName ?? hints.playerName;
+    if(n && typeof n==="string"){ nameCache.set(id,n); return n; }
+  }
+  for(const base of ["users","players","profiles","accounts"]){
+    try{
+      const snap = await db.ref(`${base}/${id}`).once("value");
+      const v = snap.val();
+      if(v && typeof v==="object"){
+        const n = v.name ?? v.username ?? v.displayName ?? v.playerName ?? v.fullName;
+        if(n && typeof n==="string"){ nameCache.set(id,n); return n; }
+      }
+    }catch(e){ /* ignore */ }
+  }
+  nameMisses.add(id);
+  return null;
+}
+
+/* --- Try to load a referral map node --- */
+async function tryReferralMap(path){
+  const node = await readPath(path);
+  if(!node || typeof node!=="object") return null;
+  const referrers = {};
+  for(const [refId, children] of Object.entries(node)){
+    if(!children || typeof children!=="object") continue;
+    const referred = [];
+    for(const [refdId, meta] of Object.entries(children)){
+      let ts=0, name=null;
+      if(meta && typeof meta==="object"){
+        ts = asMillis(meta.timestamp ?? meta.ts ?? meta.createdAt ?? meta.time ?? 0) || keyToMillis(refdId);
+        name = meta.name ?? meta.username ?? meta.displayName ?? meta.playerName ?? null;
+      } else if(meta === true || meta === 1 || meta === "true"){
+        ts = keyToMillis(refdId); // key might be a timestamp
+      }
+      referred.push({ id:refdId, name, ts });
+    }
+    referrers[refId] = { id:refId, referred };
+  }
+  return Object.keys(referrers).length ? referrers : null;
+}
+
+/* --- Try to build referrals from a users-style node with referredBy field --- */
+async function tryInvertReferredBy(base){
+  const node = await readPath(base);
+  if(!node || typeof node!=="object") return null;
+  const referrers = {};
+  let found=0;
+  for(const [userId, u] of Object.entries(node)){
+    if(!u || typeof u!=="object") continue;
+    const rb = u.referredBy ?? u.referrer ?? u.referred_by ?? u.invitedBy ?? u.inviter;
+    if(!rb) continue;
+    let refId=null, ts=0;
+    if(typeof rb === "string"){ refId = rb; }
+    else if(typeof rb === "object"){ refId = rb.id ?? rb.uid ?? rb.referrerId; ts = asMillis(rb.timestamp ?? rb.ts ?? rb.createdAt ?? 0); }
+    if(!refId) continue;
+    found++;
+    if(!referrers[refId]) referrers[refId] = { id:refId, referred: [] };
+    referrers[refId].referred.push({
+      id: userId,
+      name: u.name ?? u.username ?? u.displayName ?? u.playerName ?? null,
+      ts
+    });
+  }
+  return found ? referrers : null;
+}
+
+/* --- Main referral loader --- */
+async function loadReferrals(){
+  setRefStatus("Fetching referral data from Firebase…");
+  refDbgReset("Referral load — " + new Date().toISOString());
+  refDbg(`Database: ${firebaseConfig.databaseURL}`);
+  $("refList").innerHTML='<div class="empty-msg">Loading…</div>';
+
   try{
-    const out = await discover();
-    dbg(out);
-    setStatus("Diagnostics complete. See Diagnostics panel below.","ok");
+    let referrers = null, source = null;
+
+    // 1) Try referral-map style nodes
+    for(const p of ["referrals","userReferrals","referralData","referralTree","invites","inviteData"]){
+      const r = await tryReferralMap(p);
+      if(r){ referrers = r; source = p; break; }
+      refDbg(`${p} → (empty or not a referral map)`);
+    }
+
+    // 2) Try inverting referredBy from users-like nodes
+    if(!referrers){
+      for(const base of ["users","players","profiles","accounts"]){
+        const r = await tryInvertReferredBy(base);
+        if(r){ referrers = r; source = base+"/*/referredBy"; break; }
+        refDbg(`${base}/*/referredBy → (no referredBy fields found)`);
+      }
+    }
+
+    if(!referrers){
+      refDbg("No referral data found at any known path.");
+      $("refReferrers").textContent="—";
+      $("refReferred").textContent="—";
+      $("refTop").textContent="—";
+      $("refAvg").textContent="—";
+      $("refList").innerHTML='<div class="empty-msg">No referral records found. Click <b>Diagnose Referrals</b> to inspect what exists in Firebase.</div>';
+      setRefStatus("No referral data found. See diagnostics.","error");
+      return;
+    }
+
+    refDbg(`Loaded referral structure from: ${source}`);
+    refDbg(`Referrers found: ${Object.keys(referrers).length}`);
+
+    // Resolve names for referrers & referred players
+    const allIds = new Set();
+    for(const [rid, r] of Object.entries(referrers)){ allIds.add(rid); (r.referred||[]).forEach(x=>allIds.add(x.id)); }
+    refDbg(`Resolving ${allIds.size} names…`);
+
+    let resolved = 0;
+    await Promise.all([...allIds].map(async id=>{
+      const n = await resolveName(id);
+      if(n) resolved++;
+    }));
+    refDbg(`Resolved ${resolved} / ${allIds.size} display names.`);
+
+    // Attach names
+    for(const [rid, r] of Object.entries(referrers)){
+      r.name = nameCache.get(rid) || null;
+      (r.referred||[]).forEach(x=>{
+        if(!x.name) x.name = nameCache.get(x.id) || null;
+      });
+    }
+
+    refData = { referrers, source };
+    renderReferrals();
+
+    const refCount = Object.keys(referrers).length;
+    const referredCount = Object.values(referrers).reduce((a,r)=>a+(r.referred?.length||0),0);
+    setRefStatus(`✅ Loaded ${refCount} referrer(s) and ${referredCount} referred player(s) from ${source}.`,"ok");
   }catch(e){
-    dbg("Diagnostics failed: "+e.message);
-    setStatus("Diagnostics failed: "+e.message,"error");
+    console.error(e);
+    let msg = e && e.message ? e.message : String(e);
+    if(/permission_denied|PERMISSION_DENIED/i.test(msg)) msg="Firebase denied the read. Check Realtime Database rules for referrals / users.";
+    refDbg("ERROR: "+msg);
+    $("refList").innerHTML='<div class="empty-msg">Could not load referrals.</div>';
+    setRefStatus("Could not read referrals: "+msg,"error");
   }
 }
 
-function fmtHour(h){
-  const start=new Date(Date.UTC(2020,0,1,h));
-  const end=new Date(Date.UTC(2020,0,1,h+1));
-  const f=d=>new Intl.DateTimeFormat("en-US",{timeZone:"UTC",hour:"numeric",hour12:true}).format(d);
-  return `${f(start)}–${h===23?"12:00 AM":f(end)}`;
+/* --- Render referral list with expand/collapse --- */
+function renderReferrals(){
+  const referrers = refData.referrers || {};
+  const list = Object.values(referrers);
+
+  const search = ($("refSearch").value || "").trim().toLowerCase();
+  const sortBy = $("refSort").value;
+
+  // Filter
+  const filtered = list.filter(r=>{
+    if(!search) return true;
+    const n = (r.name || "").toLowerCase();
+    if(n.includes(search) || r.id.toLowerCase().includes(search)) return true;
+    // also match against referred names / ids
+    return (r.referred||[]).some(x=>
+      (x.name||"").toLowerCase().includes(search) || x.id.toLowerCase().includes(search)
+    );
+  });
+
+  // Sort
+  filtered.sort((a,b)=>{
+    if(sortBy==="name"){
+      const an=(a.name||a.id).toLowerCase(), bn=(b.name||b.id).toLowerCase();
+      return an.localeCompare(bn);
+    }
+    if(sortBy==="recent"){
+      const at=Math.max(0,...(a.referred||[]).map(x=>x.ts||0));
+      const bt=Math.max(0,...(b.referred||[]).map(x=>x.ts||0));
+      return bt-at;
+    }
+    // count
+    return (b.referred?.length||0) - (a.referred?.length||0);
+  });
+
+  // Metrics (always from full set, not filtered)
+  const totalReferrers = list.length;
+  const totalReferred = list.reduce((a,r)=>a+(r.referred?.length||0),0);
+  const top = list.reduce((best,r)=> (r.referred?.length||0) > (best.referred?.length||0) ? r : best, {referred:[]});
+  const avg = totalReferrers ? (totalReferred/totalReferrers) : 0;
+
+  $("refReferrers").textContent = totalReferrers;
+  $("refReferred").textContent = totalReferred;
+  $("refTop").textContent = top && top.referred ? `${top.referred.length}` : "—";
+  $("refAvg").textContent = avg.toFixed(2);
+
+  const container = $("refList");
+  if(!filtered.length){
+    container.innerHTML = `<div class="empty-msg">${search?"No referrers match your search.":"No referral data."}</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(r=>{
+    const name = r.name || "(no name)";
+    const count = r.referred?.length || 0;
+    const referredSorted = [...(r.referred||[])].sort((a,b)=> (b.ts||0)-(a.ts||0));
+    const items = referredSorted.map(x=>{
+      const xname = x.name || "(no name)";
+      return `<div class="referred-item">
+        <span class="dot"></span>
+        <span class="r-name">${escapeHtml(xname)}</span>
+        <span class="r-id">${escapeHtml(x.id)}</span>
+        <span class="r-ts">${x.ts?fmtDate(x.ts):"—"}</span>
+      </div>`;
+    }).join("") || '<div class="referred-item" style="color:#8e9ab8">No referred players recorded.</div>';
+
+    return `<div class="referrer-block" data-rid="${escapeAttr(r.id)}">
+      <div class="referrer-head">
+        <span class="caret">▶</span>
+        <span class="referrer-name">${escapeHtml(name)} <span class="referrer-id">· ${escapeHtml(r.id)}</span></span>
+        <span class="referrer-count">${count}</span>
+      </div>
+      <div class="referrer-body" hidden>${items}</div>
+    </div>`;
+  }).join("");
+
+  // Wire up expand/collapse
+  container.querySelectorAll(".referrer-block").forEach(block=>{
+    const head = block.querySelector(".referrer-head");
+    const body = block.querySelector(".referrer-body");
+    head.onclick = ()=>{
+      const open = block.classList.toggle("open");
+      body.hidden = !open;
+    };
+  });
 }
 
-$("load").onclick=load;
-$("refresh").onclick=load;
-$("diagnose").onclick=diagnose;
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* --- Referral diagnostics --- */
+async function diagnoseReferrals(){
+  refDbgReset("Referral diagnostics — " + new Date().toISOString());
+  refDbg(`Database: ${firebaseConfig.databaseURL}`);
+  setRefStatus("Diagnosing referrals…");
+
+  const candidates = ["referrals","userReferrals","referralData","referralTree","invites","inviteData","users","players","profiles","accounts"];
+  for(const root of candidates){
+    try{
+      const snap = await db.ref(root).orderByKey().limitToLast(3).once("value");
+      if(!snap.exists()){ refDbg(`${root} → (empty)`); continue; }
+      const val = snap.val();
+      const keys = Object.keys(val);
+      refDbg(`${root} → ${keys.length} top-level key(s): ${keys.slice(0,5).join(", ")}${keys.length>5?"…":""}`);
+      const firstId = keys[0];
+      const first = val[firstId];
+      if(first && typeof first==="object"){
+        const fields = Object.keys(first);
+        refDbg(`    ${root}/${firstId} → fields: [${fields.slice(0,15).join(", ")}${fields.length>15?"…":""}]`);
+        refDbg(`    Sample: ${JSON.stringify(first).slice(0,350)}`);
+        // If the first child is itself a map of children, drill one more
+        const firstChild = first[fields[0]];
+        if(firstChild && typeof firstChild==="object" && !Array.isArray(firstChild)){
+          const subFields = Object.keys(firstChild);
+          refDbg(`        ${root}/${firstId}/${fields[0]} → sub-keys: [${subFields.slice(0,10).join(", ")}${subFields.length>10?"…":""}]`);
+          refDbg(`        Sub sample: ${JSON.stringify(firstChild).slice(0,250)}`);
+        }
+      }
+    }catch(e){
+      refDbg(`${root} → error: ${e.message}`);
+    }
+  }
+  setRefStatus("Referral diagnostics complete. See panel below.","ok");
+}
+
+/* ============================================================
+   Wiring
+   ============================================================ */
+$("load").onclick = load;
+$("diagnose").onclick = diagnose;
+$("loadRef").onclick = loadReferrals;
+$("diagRef").onclick = diagnoseReferrals;
+$("refSearch").addEventListener("input", ()=>{ if(refData.referrers) renderReferrals(); });
+$("refSort").addEventListener("change", ()=>{ if(refData.referrers) renderReferrals(); });
+
+$("refresh").onclick = ()=>{
+  if($("tab-referred").classList.contains("active")) loadReferrals();
+  else load();
+};
 </script>
 </body>
 </html>
