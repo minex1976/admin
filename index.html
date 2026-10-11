@@ -1,1097 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Admin · Winzo Server</title>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
-    </script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background: #0b1a2a;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            padding: 20px;
-            min-height: 100vh;
-            color: #d4e6fa;
-        }
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 0;
-            border-bottom: 2px solid rgba(60, 120, 170, 0.2);
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .admin-header h1 {
-            color: #f5e7c8;
-            font-size: 1.8rem;
-            letter-spacing: 2px;
-        }
-        .admin-header h1 span {
-            color: #f5c542;
-        }
-        .admin-header .status {
-            color: #7ddfa0;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .admin-header .status .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .admin-header .status .dot.online {
-            background: #7ddfa0;
-            box-shadow: 0 0 10px rgba(125, 223, 160, 0.4);
-        }
-        .admin-header .status .dot.offline {
-            background: #ff6b6b;
-            box-shadow: 0 0 10px rgba(255, 80, 80, 0.3);
-        }
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 768px) {
-            .admin-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        .admin-card {
-            background: rgba(20, 45, 70, 0.6);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(60, 120, 170, 0.15);
-        }
-        .admin-card h2 {
-            color: #f5e7c8;
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(60, 120, 170, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .admin-card .count {
-            color: #8ab0c8;
-            font-size: 0.8rem;
-            font-weight: 400;
-        }
-
-        .transaction-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .transaction-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        .transaction-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        .transaction-list::-webkit-scrollbar-thumb {
-            background: rgba(80, 150, 200, 0.3);
-            border-radius: 10px;
-        }
-        .tx-item {
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            border-left: 4px solid #f5d76e;
-            transition: all 0.3s;
-        }
-        .tx-item.approved {
-            border-left-color: #7ddfa0;
-            opacity: 0.7;
-        }
-        .tx-item.rejected {
-            border-left-color: #ff6b6b;
-            opacity: 0.7;
-        }
-        .tx-item .tx-info {
-            flex: 1;
-            min-width: 140px;
-        }
-        .tx-item .tx-info .user {
-            font-weight: 700;
-            color: #f5e7c8;
-            font-size: 0.95rem;
-        }
-        .tx-item .tx-info .details {
-            font-size: 0.7rem;
-            color: #8ab0c8;
-        }
-        .tx-item .tx-amount {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: #f5c542;
-            min-width: 60px;
-        }
-        .tx-item .tx-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: stretch;
-        }
-        .tx-item .tx-actions .row {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .tx-item .tx-actions select {
-            background: #0a1a2a;
-            border: 1px solid rgba(60, 120, 170, 0.4);
-            border-radius: 16px;
-            padding: 2px 8px;
-            color: #e8f0f8;
-            font-size: 0.7rem;
-            outline: none;
-            max-width: 120px;
-        }
-        .tx-item .tx-actions select:focus {
-            border-color: #f5c542;
-        }
-        .tx-item .tx-actions input[type="text"] {
-            background: #0a1a2a;
-            border: 1px solid rgba(60, 120, 170, 0.4);
-            border-radius: 16px;
-            padding: 2px 8px;
-            color: #e8f0f8;
-            font-size: 0.7rem;
-            outline: none;
-            width: 100px;
-        }
-        .tx-item .tx-actions input[type="text"]:focus {
-            border-color: #f5c542;
-        }
-        .tx-item .tx-actions button {
-            padding: 4px 14px;
-            border-radius: 20px;
-            border: none;
-            font-weight: 700;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tx-item .tx-actions .approve {
-            background: #2a8a4a;
-            color: #f0fff0;
-        }
-        .tx-item .tx-actions .approve:hover:not(:disabled) {
-            background: #3aaa5a;
-            transform: scale(1.02);
-        }
-        .tx-item .tx-actions .reject {
-            background: #8a2a2a;
-            color: #fff0f0;
-        }
-        .tx-item .tx-actions .reject:hover:not(:disabled) {
-            background: #aa3a3a;
-            transform: scale(1.02);
-        }
-        .tx-item .tx-actions button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        .tx-item .tx-status {
-            font-size: 0.65rem;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .tx-item .tx-status.pending {
-            background: rgba(200, 180, 60, 0.2);
-            color: #f5d76e;
-        }
-        .tx-item .tx-status.approved {
-            background: rgba(70, 200, 120, 0.2);
-            color: #7ddfa0;
-        }
-        .tx-item .tx-status.rejected {
-            background: rgba(200, 70, 70, 0.2);
-            color: #ff8a8a;
-        }
-        .tx-timestamp {
-            font-size: 0.6rem;
-            color: #4a6a8a;
-            min-width: 50px;
-            text-align: right;
-        }
-
-        .player-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .player-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        .player-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        .player-list::-webkit-scrollbar-thumb {
-            background: rgba(80, 150, 200, 0.3);
-            border-radius: 10px;
-        }
-        .player-item {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .player-item .p-name {
-            font-weight: 700;
-            color: #f5e7c8;
-        }
-        .player-item .p-wallets {
-            display: flex;
-            gap: 12px;
-            font-size: 0.8rem;
-        }
-        .player-item .p-wallets span {
-            color: #8ab0c8;
-        }
-        .player-item .p-wallets .main {
-            color: #f5c542;
-        }
-        .player-item .p-wallets .play {
-            color: #7ddfa0;
-        }
-        .player-item .p-wallets .pending {
-            color: #f5d76e;
-        }
-
-        .empty-state {
-            color: #4a6a8a;
-            text-align: center;
-            padding: 30px 0;
-            font-size: 0.9rem;
-        }
-
-        .refresh-btn {
-            background: rgba(40, 80, 120, 0.3);
-            border: 1px solid rgba(60, 120, 170, 0.2);
-            border-radius: 30px;
-            padding: 6px 16px;
-            color: #8ab0c8;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-        .refresh-btn:hover {
-            background: rgba(40, 80, 120, 0.5);
-        }
-        .refresh-btn:active {
-            transform: scale(0.95);
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(10, 26, 42, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(245, 197, 66, 0.3);
-            border-radius: 12px;
-            padding: 12px 20px;
-            color: #d4e6fa;
-            font-size: 0.85rem;
-            z-index: 1000;
-            animation: slideUp 0.3s ease;
-            display: none;
-            max-width: 350px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-        }
-        .toast.show {
-            display: block;
-        }
-        .toast.success {
-            border-color: #7ddfa0;
-        }
-        .toast.error {
-            border-color: #ff6b6b;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .tx-user-select {
-            background: #0a1a2a;
-            border: 1px solid rgba(60, 120, 170, 0.4);
-            border-radius: 16px;
-            padding: 2px 8px;
-            color: #e8f0f8;
-            font-size: 0.7rem;
-            outline: none;
-            max-width: 120px;
-        }
-        .tx-user-select:focus {
-            border-color: #f5c542;
-        }
-        .tx-user-input {
-            background: #0a1a2a;
-            border: 1px solid rgba(60, 120, 170, 0.4);
-            border-radius: 16px;
-            padding: 2px 8px;
-            color: #e8f0f8;
-            font-size: 0.7rem;
-            outline: none;
-            width: 100px;
-        }
-        .tx-user-input:focus {
-            border-color: #f5c542;
-        }
-        .tx-actions-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 4px;
-        }
-        .copy-btn {
-            background: rgba(40, 80, 120, 0.4);
-            border: none;
-            border-radius: 12px;
-            padding: 0 6px;
-            color: #8ab0c8;
-            font-size: 0.6rem;
-            cursor: pointer;
-        }
-        .copy-btn:hover {
-            background: rgba(40, 80, 120, 0.6);
-        }
-        .debug-btn {
-            background: rgba(200, 180, 60, 0.2);
-            border: 1px solid rgba(200, 180, 60, 0.3);
-            border-radius: 16px;
-            padding: 2px 12px;
-            color: #f5d76e;
-            font-size: 0.65rem;
-            cursor: pointer;
-        }
-        .debug-btn:hover {
-            background: rgba(200, 180, 60, 0.3);
-        }
-        .load-users-btn {
-            background: rgba(70, 200, 120, 0.2);
-            border: 1px solid rgba(70, 200, 120, 0.3);
-            border-radius: 16px;
-            padding: 2px 12px;
-            color: #7ddfa0;
-            font-size: 0.65rem;
-            cursor: pointer;
-        }
-        .load-users-btn:hover {
-            background: rgba(70, 200, 120, 0.3);
-        }
-
-
-        /* Authentication */
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: #081522;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 2000;
-        }
-        .auth-card {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(20, 45, 70, 0.96);
-            border: 1px solid rgba(60, 120, 170, 0.25);
-            border-radius: 20px;
-            padding: 28px;
-            box-shadow: 0 20px 60px rgba(0,0,0,.5);
-        }
-        .auth-card h2 { color:#f5e7c8; margin-bottom:8px; }
-        .auth-card p { color:#8ab0c8; font-size:.85rem; margin-bottom:20px; }
-        .auth-card input {
-            width:100%; padding:12px 14px; margin-bottom:10px;
-            background:#0a1a2a; border:1px solid rgba(60,120,170,.4);
-            border-radius:12px; color:#e8f0f8; outline:none;
-        }
-        .auth-card input:focus { border-color:#f5c542; }
-        .auth-login {
-            width:100%; padding:11px; border:0; border-radius:12px;
-            background:#f5c542; color:#16202a; font-weight:800; cursor:pointer;
-        }
-        .auth-login:disabled { opacity:.5; cursor:not-allowed; }
-        .auth-error { min-height:20px; color:#ff8a8a; font-size:.78rem; margin-top:10px; }
-        .role-badge {
-            display:inline-block; margin-left:8px; padding:3px 9px;
-            border-radius:12px; font-size:.68rem; font-weight:700;
-            background:rgba(245,197,66,.15); color:#f5d76e;
-        }
-        .logout-btn, .clear-btn {
-            background:rgba(255,107,107,.12);
-            border:1px solid rgba(255,107,107,.25);
-            border-radius:30px; padding:6px 14px; color:#ffaaaA;
-            cursor:pointer; font-size:.8rem;
-        }
-        .clear-btn {
-            background:rgba(245,197,66,.10);
-            border-color:rgba(245,197,66,.25); color:#f5d76e;
-        }
-        .logout-btn:hover, .clear-btn:hover { background:rgba(255,107,107,.22); }
-        .clear-btn:hover { background:rgba(245,197,66,.20); }
-        .hidden { display:none !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Winzo Player Analytics</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#18213d,#080b16 70%);color:#eef2ff;font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh;padding:18px}
+.app{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.title{font-size:25px;font-weight:900}.sub{color:#8e9ab8;font-size:12px;margin-top:4px}
+.card{background:rgba(20,27,48,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;box-shadow:0 18px 50px #0005;margin-bottom:14px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:150px}.field label{display:block;color:#8e9ab8;font-size:11px;margin-bottom:6px}.field input,.field select{width:100%;padding:11px;border-radius:12px;border:1px solid #303b59;background:#0d1324;color:#fff}
+button{border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,#ffd75a,#efaa24);font-weight:800;color:#17120a;cursor:pointer}
+.status{font-size:12px;color:#8e9ab8;margin-top:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:16px;border-radius:16px;background:#0d1324;border:1px solid #25304b}.metric b{display:block;font-size:28px;color:#ffd75a}.metric span{font-size:11px;color:#8e9ab8}
+.formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
+.note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
-    <div class="auth-overlay" id="authOverlay">
-        <form class="auth-card" id="loginForm">
-            <h2>🔐 Winzo Admin Login</h2>
-            <p id="loginDescription">Sign in using the local admin account stored in this browser.</p>
-            <input id="loginUsername" type="text" autocomplete="username" placeholder="Username" required />
-            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required />
-            <button class="auth-login" id="loginBtn" type="submit">Sign In</button>
-            <div class="auth-error" id="loginError"></div>
-        </form>
+<div class="app">
+  <div class="head">
+    <div><div class="title">📊 WINZO Player Analytics</div><div class="sub">Historical analysis · Human players only · Ethiopia time (Africa/Addis_Ababa)</div></div>
+    <button id="refresh">↻ Analyze / Refresh</button>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div class="field"><label>FROM DATE (ETHIOPIA)</label><input id="fromDate" type="date"></div><div class="field"><label>TO DATE (ETHIOPIA)</label><input id="toDate" type="date"></div>
+      <div class="field"><label>ROOM</label><select id="room"><option value="both">Both rooms</option><option value="room_15">15 Birr</option><option value="room_30">30 Birr</option></select></div>
+      <button id="load">Load data</button>
     </div>
-    <div class="admin-container hidden" id="adminApp">
-        <div class="admin-header">
-            <h1>🎯 <span>Winzo</span> · Admin</h1>
-            <div class="status">
-                <span class="dot online" id="statusDot"></span>
-                <span id="adminStatus">🔐 Signing in...</span>
-                <span class="role-badge hidden" id="roleBadge"></span>
-                <button class="refresh-btn" id="refreshBtn">⟳ Refresh</button>
-                <button class="load-users-btn" id="loadUsersBtn">👥 Load Users</button>
-                <button class="debug-btn" id="debugBtn">🐛 Debug Users</button>
-                <button class="clear-btn" id="clearBtn">🧹 Clear Screen</button>
-                <button class="refresh-btn hidden" id="manageAccountsBtn">👤 Accounts</button>
-                <button class="logout-btn" id="logoutBtn">↪ Logout</button>
-            </div>
-        </div>
+    <div id="status" class="status">Ready.</div>
+  </div>
 
-        <div class="admin-grid">
-            <div class="admin-card">
-                <h2>📋 Transactions <span class="count" id="txCount">(0)</span></h2>
-                <div class="transaction-list" id="transactionList"><div class="empty-state">No transactions</div></div>
-            </div>
-            <div class="admin-card">
-                <h2>👥 Players <span class="count" id="playerCount">(0)</span></h2>
-                <div class="player-list" id="playerList"><div class="empty-state">No players registered</div></div>
-            </div>
-        </div>
+  <div class="grid">
+    <div class="metric"><b id="avg">—</b><span>Average players / game · 24h</span></div>
+    <div class="metric"><b id="peak">—</b><span>Peak hourly average</span></div>
+    <div class="metric"><b id="games">—</b><span>Human games recorded</span></div>
+    <div class="metric"><b id="hours">—</b><span>Hours with data</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Daily calculation</h3>
+    <div id="formula" class="formula">Select a date and load data.</div>
+  </div>
+
+  <div class="card">
+    <h3>Hourly breakdown</h3>
+    <div class="note">Each row uses Ethiopian local time and 12-hour AM/PM labels. It is the average number of human players per recorded game during that clock hour. The daily figure is the sum of the 24 hourly averages divided by 24, so hours with zero players contribute zero.</div>
+    <div style="overflow:auto">
+      <table><thead><tr><th>Hour</th><th>Games</th><th>Total human players</th><th>Avg players / game</th><th>Contribution</th></tr></thead>
+      <tbody id="rows"></tbody></table>
     </div>
+  </div>
 
-    <div class="toast" id="toast"></div>
+  <div class="card">
+    <h3>Firebase data format</h3>
+    <div class="note">
+      This dashboard connects directly to Firebase Realtime Database and reads <code>/analytics/gameHistory/YYYY-MM-DD/room_15/</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/</code> only when you press Analyze / Refresh. It does not subscribe to live room/player state. Each record needs a timestamp and a reliable <code>humanPlayerCount</code> (or a <code>players</code> object with <code>isBot: true</code> for bots).
+      <br><br>
+      Example: <code>/analytics/gameHistory/2026-10-11/room_15/12345</code> → <code>{ timestamp: 179..., hour: 14, humanPlayerCount: 40, botPlayerCount: 3 }</code>.<br><br><b>Note:</b> The dashboard can only analyze records that already exist in Firebase. It cannot recreate older rounds that were never saved.
+    </div>
+  </div>
+</div>
 
-    <script>
-        // ============================================================
-        //  FIREBASE CONFIG – solve-527f4
-        // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
-            authDomain: "renewed-8fe38.firebaseapp.com",
-            projectId: "renewed-8fe38",
-            storageBucket: "renewed-8fe38.firebasestorage.app",
-            messagingSenderId: "741808375705",
-            appId: "1:741808375705:web:c961f1664a0e17ad257508",
-            measurementId: "G-04EW1D775E"
-        };
+<script>
+const firebaseConfig={
+ apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
+ authDomain:"renewed-8fe38.firebaseapp.com",
+ databaseURL:"https://renewed-8fe38-default-rtdb.firebaseio.com",
+ projectId:"renewed-8fe38",
+ storageBucket:"renewed-8fe38.firebasestorage.app",
+ messagingSenderId:"741808375705",
+ appId:"1:741808375705:web:c961f1664a0e17ad257508",
+ measurementId:"G-04EW1D775E"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const TZ="Africa/Addis_Ababa";
+function ethiopiaDate(d=new Date()){
+  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
+  const v=Object.fromEntries(parts.map(p=>[p.type,p.value]));
+  return `${v.year}-${v.month}-${v.day}`;
+}
+$("fromDate").value=ethiopiaDate();
+$("toDate").value=ethiopiaDate();
 
-        let database = null;
-        let toastTimeout = null;
-        let allUsers = {};
-        let currentUser = null;
-        let currentRole = null;
-
-        // Local-only administrator accounts. Nothing related to login
-        // credentials is stored in Firebase. Passwords are stored as
-        // SHA-256 hashes in this browser's localStorage.
-        const LOCAL_ACCOUNTS_KEY = 'Winzo_admin_accounts_v1';
-        const LOCAL_SESSION_KEY = 'Winzo_admin_session_v1';
-
-        try {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            console.log('✅ Firebase connected (data only)');
-            document.getElementById('adminStatus').textContent = '🟢 Online';
-            document.getElementById('statusDot').className = 'dot online';
-        } catch (e) {
-            console.warn('⚠️ Firebase error:', e);
-            document.getElementById('adminStatus').textContent = '🔴 Offline';
-            document.getElementById('statusDot').className = 'dot offline';
+function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
+function asMillis(value){
+  let n=Number(value||0);
+  if(!Number.isFinite(n)||n<=0)return 0;
+  // Accept either Unix seconds or milliseconds.
+  if(n<100000000000)n*=1000;
+  return n;
+}
+function timestampOf(g){return asMillis(g && (g.timestamp||g.startedAt||g.createdAt||g.endedAt));}
+function hourFromRecord(g){
+  if(Number.isInteger(Number(g.hour)) && Number(g.hour)>=0 && Number(g.hour)<24) return Number(g.hour);
+  const ts=timestampOf(g);
+  if(!ts)return null;
+  const parts=new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ts));
+  return Number(parts.find(p=>p.type==="hour")?.value);
+}
+function humanCount(g){
+  if(!g)return 0;
+  if(g.humanPlayerCount!==undefined && Number.isFinite(Number(g.humanPlayerCount))) return Math.max(0,Number(g.humanPlayerCount));
+  if(g.botsExcluded===true && g.playerCount!==undefined && Number.isFinite(Number(g.playerCount))) return Math.max(0,Number(g.playerCount));
+  const players=g.players;
+  if(players && typeof players==="object"){
+    const values=Array.isArray(players)?players:Object.values(players);
+    return values.filter(p=>p && p.isBot!==true && p.isBot!=="true" && p.bot!==true).length;
+  }
+  return null; // Do not silently count a record as zero if it has no human count.
+}
+async function readPath(path){
+  const snap=await db.ref(path).once("value");
+  return snap.val()||{};
+}
+function dateKeysBetween(from,to){
+  const keys=[];
+  const start=new Date(from+"T12:00:00Z"), end=new Date(to+"T12:00:00Z");
+  for(let d=new Date(start);d<=end;d.setUTCDate(d.getUTCDate()+1)) keys.push(d.toISOString().slice(0,10));
+  return keys;
+}
+function fmtHour(h){
+  const start=new Date(Date.UTC(2020,0,1,h));
+  const end=new Date(Date.UTC(2020,0,1,h+1));
+  const f=d=>new Intl.DateTimeFormat("en-US",{timeZone:"UTC",hour:"numeric",hour12:true}).format(d);
+  return `${f(start)}–${h===23?"12:00 AM":f(end)}`;
+}
+async function load(){
+  const from=$("fromDate").value, to=$("toDate").value;
+  if(!from||!to||from>to){setStatus("Choose a valid date range.","error");return;}
+  const keys=dateKeysBetween(from,to);
+  if(keys.length>366){setStatus("Please select a date range of 366 days or fewer.","error");return;}
+  setStatus("Fetching saved Firebase records…");
+  $("rows").innerHTML=""; 
+  try{
+    const room=$("room").value;
+    const rooms=room==="both"?["room_15","room_30"]:[room];
+    const all=[];
+    for(const date of keys){
+      for(const r of rooms){
+        const data=await readPath(`analytics/gameHistory/${date}/${r}`);
+        if(data && typeof data==="object"){
+          Object.entries(data).forEach(([id,g])=>{
+            if(g && typeof g==="object") all.push({...g,_date:date,_room:r,_id:id});
+          });
         }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = 'toast show ' + type;
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
-        }
-
-        function getAccounts() {
-            try { return JSON.parse(localStorage.getItem(LOCAL_ACCOUNTS_KEY) || '{}'); }
-            catch (e) { return {}; }
-        }
-        function saveAccounts(accounts) { localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(accounts)); }
-        async function hashPassword(password) {
-            const data = new TextEncoder().encode(password);
-            const hash = await crypto.subtle.digest('SHA-256', data);
-            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-        function setAuthError(message) { document.getElementById('loginError').textContent = message || ''; }
-
-        function showAdminApp(username, role) {
-            currentUser = username; currentRole = role;
-            localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({ username, role }));
-            document.getElementById('authOverlay').classList.add('hidden');
-            document.getElementById('adminApp').classList.remove('hidden');
-            const badge = document.getElementById('roleBadge');
-            badge.textContent = role === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN';
-            badge.classList.remove('hidden');
-            document.getElementById('manageAccountsBtn').classList.toggle('hidden', role !== 'superadmin');
-            document.getElementById('adminStatus').textContent = '🟢 ' + username;
-            loadUsers();
-        }
-
-        function showLogin() {
-            currentUser = null; currentRole = null;
-            localStorage.removeItem(LOCAL_SESSION_KEY);
-            document.getElementById('adminApp').classList.add('hidden');
-            document.getElementById('authOverlay').classList.remove('hidden');
-            document.getElementById('roleBadge').classList.add('hidden');
-            document.getElementById('manageAccountsBtn').classList.add('hidden');
-            document.getElementById('loginPassword').value = '';
-        }
-
-        function setupFirstAdmin() {
-            const card = document.querySelector('.auth-card');
-            card.innerHTML = `
-                <h2>⚙️ Create Super Admin</h2>
-                <p>This is stored only in this browser's localStorage.</p>
-                <input id="setupUsername" type="text" autocomplete="username" placeholder="Super admin username" required />
-                <input id="setupPassword" type="password" autocomplete="new-password" placeholder="Password (min 6 characters)" required />
-                <input id="setupPassword2" type="password" autocomplete="new-password" placeholder="Confirm password" required />
-                <button class="auth-login" id="setupBtn" type="button">Create Super Admin</button>
-                <div class="auth-error" id="loginError"></div>`;
-            document.getElementById('setupBtn').onclick = async () => {
-                const username = document.getElementById('setupUsername').value.trim();
-                const password = document.getElementById('setupPassword').value;
-                const confirm = document.getElementById('setupPassword2').value;
-                if (!username || password.length < 6) return setAuthError('Username is required and password must be at least 6 characters.');
-                if (password !== confirm) return setAuthError('Passwords do not match.');
-                const accounts = getAccounts();
-                accounts[username.toLowerCase()] = { username, role: 'superadmin', passwordHash: await hashPassword(password) };
-                saveAccounts(accounts);
-                showLoginForm();
-                document.getElementById('loginUsername').value = username;
-                showToast('✅ Super admin created locally.', 'success');
-            };
-        }
-
-        function showLoginForm() {
-            const card = document.querySelector('.auth-card');
-            card.innerHTML = `
-                <h2>🔐 Winzo Admin Login</h2>
-                <p>Login credentials are stored locally in this browser, not in Firebase.</p>
-                <input id="loginUsername" type="text" autocomplete="username" placeholder="Username" required />
-                <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required />
-                <button class="auth-login" id="loginBtn" type="submit">Sign In</button>
-                <div class="auth-error" id="loginError"></div>`;
-            document.getElementById('loginForm').onsubmit = async (event) => {
-                event.preventDefault();
-                const username = document.getElementById('loginUsername').value.trim();
-                const password = document.getElementById('loginPassword').value;
-                const account = getAccounts()[username.toLowerCase()];
-                if (!account || account.passwordHash !== await hashPassword(password)) return setAuthError('Invalid username or password.');
-                showAdminApp(account.username, account.role);
-            };
-        }
-
-        function initLocalAuth() {
-            const accounts = getAccounts();
-            if (!Object.keys(accounts).length) { setupFirstAdmin(); return; }
-            showLoginForm();
-            try {
-                const session = JSON.parse(localStorage.getItem(LOCAL_SESSION_KEY) || 'null');
-                const account = session && accounts[String(session.username).toLowerCase()];
-                if (account && account.role === session.role) showAdminApp(account.username, account.role);
-            } catch (e) {}
-        }
-
-        document.getElementById('logoutBtn').onclick = () => showLogin();
-
-        document.getElementById('clearBtn').onclick = () => {
-            document.getElementById('transactionList').innerHTML = '<div class="empty-state">Screen cleared. Click Refresh to load transactions.</div>';
-            document.getElementById('playerList').innerHTML = '<div class="empty-state">Screen cleared. Click Load Users to load players.</div>';
-            document.getElementById('txCount').textContent = '(cleared)';
-            document.getElementById('playerCount').textContent = '(cleared)';
-            showToast('🧹 Screen cleared. Firebase data was not deleted.', 'success');
-        };
-
-        document.getElementById('manageAccountsBtn').onclick = () => {
-            if (currentRole !== 'superadmin') return;
-            const accounts = getAccounts();
-            const names = Object.values(accounts).map(a => `${a.username} (${a.role})`).join('\n');
-            const username = prompt('Create a new admin username (Cancel to close):');
-            if (!username) return;
-            const clean = username.trim();
-            if (!clean || accounts[clean.toLowerCase()]) return showToast('Username already exists or is invalid.', 'error');
-            const password = prompt('Password for ' + clean + ' (minimum 6 characters):');
-            if (!password || password.length < 6) return showToast('Password must be at least 6 characters.', 'error');
-            const role = prompt('Role: type admin or superadmin', 'admin');
-            if (role !== 'admin' && role !== 'superadmin') return showToast('Invalid role.', 'error');
-            hashPassword(password).then(hash => {
-                accounts[clean.toLowerCase()] = { username: clean, role, passwordHash: hash };
-                saveAccounts(accounts);
-                showToast('✅ Account created locally.', 'success');
-            });
-        };
-
-        // ============================================================
-        //  LOAD DATA
-        // ============================================================
-        function loadTransactions() {
-            if (!database) return;
-            const txRef = database.ref('transactions');
-            txRef.orderByChild('timestamp').limitToLast(50).on('value', snapshot => {
-                const data = snapshot.val();
-                const list = document.getElementById('transactionList');
-                const count = document.getElementById('txCount');
-                if (!data) {
-                    list.innerHTML = '<div class="empty-state">No transactions</div>';
-                    count.textContent = '(0)';
-                    return;
-                }
-                const entries = Object.values(data).reverse();
-                const pendingCount = entries.filter(tx => tx.status === 'pending').length;
-                count.textContent = `(${entries.length} · ${pendingCount} pending)`;
-                let html = '';
-                entries.forEach(tx => {
-                    const statusClass = tx.status || 'pending';
-                    const statusLabel = statusClass.charAt(0).toUpperCase() + statusClass.slice(1);
-                    const isPending = statusClass === 'pending';
-                    const timestamp = tx.timestamp ? new Date(tx.timestamp).toLocaleString() : '';
-                    const username = tx.username || 'Unknown';
-                    const selectId = `tx-user-select-${tx.id}`;
-                    const inputId = `tx-user-input-${tx.id}`;
-                    let optionsHtml = `<option value="">-- Select user --</option>`;
-                    Object.keys(allUsers).forEach(u => {
-                        const selected = (u === username) ? 'selected' : '';
-                        optionsHtml += `<option value="${u}" ${selected}>${u}</option>`;
-                    });
-                    const copyBtn = `<button class="copy-btn" onclick="copyToClipboard('${username}')">📋</button>`;
-                    html += `
-                        <div class="tx-item ${statusClass}">
-                            <div class="tx-info">
-                                <div class="user">${username} ${copyBtn}</div>
-                                <div class="details">${tx.type || 'Transaction'} · ${tx.amount || 0} Birr</div>
-                            </div>
-                            <span class="tx-status ${statusClass}">${statusLabel}</span>
-                            <div class="tx-actions">
-                                ${isPending ? `
-                                    <div class="tx-actions-row">
-                                        <select class="tx-user-select" id="${selectId}">
-                                            ${optionsHtml}
-                                        </select>
-                                        <input type="text" class="tx-user-input" id="${inputId}" placeholder="Or type username" value="${username}">
-                                        <button class="approve" data-txid="${tx.id}" onclick="approveTransaction('${tx.id}')">✅ Approve</button>
-                                        <button class="reject" data-txid="${tx.id}" onclick="rejectTransaction('${tx.id}')">❌ Reject</button>
-                                    </div>
-                                ` : `
-                                    <div class="tx-actions-row">
-                                        <button class="approve" disabled>✅ Approve</button>
-                                        <button class="reject" disabled>❌ Reject</button>
-                                    </div>
-                                `}
-                            </div>
-                            <div class="tx-timestamp">${timestamp}</div>
-                        </div>
-                    `;
-                });
-                list.innerHTML = html || '<div class="empty-state">No transactions</div>';
-            });
-        }
-
-        function loadUsers() {
-            if (!database) {
-                showToast('Database not available', 'error');
-                return;
-            }
-            const usersRef = database.ref('users');
-            usersRef.once('value', snapshot => {
-                const data = snapshot.val();
-                allUsers = data || {};
-                const list = document.getElementById('playerList');
-                const count = document.getElementById('playerCount');
-                if (!data) {
-                    list.innerHTML = '<div class="empty-state">No players registered</div>';
-                    count.textContent = '(0)';
-                    console.warn('⚠️ No users found in /users path.');
-                    showToast('⚠️ No users found in Firebase.', 'error');
-                    return;
-                }
-                const entries = Object.entries(data);
-                count.textContent = `(${entries.length})`;
-                let html = '';
-                entries.forEach(([username, userData]) => {
-                    const main = userData.mainWallet || 0;
-                    const play = userData.playWallet || 0;
-                    const pending = userData.pendingWithdrawal || 0;
-                    const copyBtn = `<button class="copy-btn" onclick="copyToClipboard('${username}')">📋</button>`;
-                    html += `
-                        <div class="player-item">
-                            <span class="p-name">${username} ${copyBtn}</span>
-                            <div class="p-wallets">
-                                <span class="main">💰 ${main}</span>
-                                <span class="play">🎰 ${play}</span>
-                                ${pending > 0 ? `<span class="pending">⏳ ${pending}</span>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                list.innerHTML = html || '<div class="empty-state">No players</div>';
-                // Refresh transactions to update dropdowns
-                loadTransactions();
-                showToast(`✅ Loaded ${entries.length} users.`, 'success');
-            }).catch(error => {
-                console.error('❌ Failed to load users:', error);
-                showToast(`❌ Error loading users: ${error.message}`, 'error');
-            });
-        }
-
-        // Initial load
-        function loadPlayers() {
-            loadUsers(); // we just call loadUsers directly
-        }
-
-        function copyToClipboard(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showToast(`✅ Copied "${text}" to clipboard`, 'success');
-                }).catch(() => {
-                    const textarea = document.createElement('textarea');
-                    textarea.value = text;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    showToast(`✅ Copied "${text}" to clipboard`, 'success');
-                });
-            } else {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showToast(`✅ Copied "${text}" to clipboard`, 'success');
-            }
-        }
-
-        // ============================================================
-        //  CORE: Find user with case‑insensitive fallback
-        // ============================================================
-        function findUserByUsername(txUsername, callback) {
-            const trimmed = txUsername.trim();
-            if (!trimmed) return callback(null, null);
-
-            console.log(`🔍 Searching for user: "${trimmed}"`);
-
-            // Try direct match first
-            const userRef = database.ref('users/' + trimmed);
-            userRef.once('value', snapshot => {
-                if (snapshot.exists()) {
-                    console.log(`✅ Direct match found: "${trimmed}"`);
-                    return callback(trimmed, snapshot.val());
-                }
-
-                // Not found – search all users
-                const allUsersRef = database.ref('users');
-                allUsersRef.once('value', allSnapshot => {
-                    const allUsersData = allSnapshot.val();
-                    if (!allUsersData) {
-                        console.warn('❌ No users in database.');
-                        return callback(null, null);
-                    }
-
-                    const keys = Object.keys(allUsersData);
-                    const lower = trimmed.toLowerCase();
-
-                    console.log('📋 All usernames:', keys);
-
-                    // Exact case‑insensitive match
-                    const exactMatch = keys.find(k => k.toLowerCase() === lower);
-                    if (exactMatch) {
-                        console.log(`✅ Case-insensitive match found: "${exactMatch}"`);
-                        return callback(exactMatch, allUsersData[exactMatch]);
-                    }
-
-                    // Try trimming spaces
-                    const trimmedMatch = keys.find(k => k.toLowerCase().trim() === lower.trim());
-                    if (trimmedMatch) {
-                        console.log(`✅ Trimmed match found: "${trimmedMatch}"`);
-                        return callback(trimmedMatch, allUsersData[trimmedMatch]);
-                    }
-
-                    console.warn(`❌ No match found for "${trimmed}"`);
-                    return callback(null, null);
-                });
-            });
-        }
-
-        // ============================================================
-        //  APPROVE TRANSACTION – With fallback and detailed logging
-        // ============================================================
-        function approveTransaction(txId) {
-            if (!database) {
-                showToast('Database not available', 'error');
-                return;
-            }
-
-            const btn = document.querySelector(`button[data-txid="${txId}"].approve`);
-            if (btn) btn.disabled = true;
-
-            const selectField = document.getElementById(`tx-user-select-${txId}`);
-            const inputField = document.getElementById(`tx-user-input-${txId}`);
-            let selectedUsername = '';
-            if (selectField && selectField.value) {
-                selectedUsername = selectField.value.trim();
-            }
-            if (!selectedUsername && inputField) {
-                selectedUsername = inputField.value.trim();
-            }
-
-            if (!selectedUsername) {
-                showToast('❌ Please select or type a username.', 'error');
-                if (btn) btn.disabled = false;
-                return;
-            }
-
-            console.log(`🔍 Approving ${txId} for user: "${selectedUsername}"`);
-
-            findUserByUsername(selectedUsername, (foundUsername, userData) => {
-                if (!foundUsername || !userData) {
-                    console.error(`❌ User "${selectedUsername}" not found.`);
-                    // Show all users in console
-                    const usersRef = database.ref('users');
-                    usersRef.once('value', snap => {
-                        const all = snap.val();
-                        console.log('📋 All registered users:', all ? Object.keys(all) : 'none');
-                        showToast(`❌ User "${selectedUsername}" not found. Check console.`, 'error');
-                        if (btn) btn.disabled = false;
-                    });
-                    return;
-                }
-
-                console.log(`✅ Found user "${foundUsername}"`);
-
-                const txRef = database.ref('transactions/' + txId);
-                txRef.once('value', txSnapshot => {
-                    const txData = txSnapshot.val();
-                    if (!txData) {
-                        showToast('Transaction not found', 'error');
-                        if (btn) btn.disabled = false;
-                        return;
-                    }
-                    if (txData.status !== 'pending') {
-                        showToast('Transaction already processed', 'error');
-                        if (btn) btn.disabled = false;
-                        return;
-                    }
-
-                    const amount = Number(txData.amount);
-                    const type = String(txData.type || '').trim().toLowerCase();
-
-                    if (!Number.isFinite(amount) || amount <= 0) {
-                        showToast('❌ Invalid transaction amount.', 'error');
-                        if (btn) btn.disabled = false;
-                        return;
-                    }
-
-                    if (type !== 'deposit' && type !== 'withdraw') {
-                        console.error('❌ Unsupported transaction type:', txData.type, txData);
-                        showToast(`❌ Unsupported transaction type: ${txData.type || 'missing'}`, 'error');
-                        if (btn) btn.disabled = false;
-                        return;
-                    }
-
-                    // Update transaction username if different
-                    if (foundUsername !== txData.username) {
-                        txRef.update({ username: foundUsername })
-                            .then(() => console.log(`✅ Transaction username updated to "${foundUsername}"`))
-                            .catch(err => console.warn('Could not update username:', err));
-                    }
-
-                    // Atomically update the user's wallet.
-                    // Validate the transaction before entering Firebase transaction()
-                    // so an unsupported type cannot silently abort with committed=false.
-                    const userRef = database.ref('users/' + foundUsername);
-
-                    userRef.once('value').then(userSnapshot => {
-                        if (!userSnapshot.exists()) {
-                            throw new Error(`User "${foundUsername}" does not exist in /users.`);
-                        }
-
-                        return userRef.transaction(current => {
-                            if (current === null || typeof current !== 'object') {
-                                return current;
-                            }
-
-                            const updated = { ...current };
-
-                            if (type === 'deposit') {
-                                updated.playWallet = Number(updated.playWallet || 0) + amount;
-                            } else {
-                                updated.mainWallet = Math.max(0, Number(updated.mainWallet || 0) - amount);
-                                updated.pendingWithdrawal = Math.max(0, Number(updated.pendingWithdrawal || 0) - amount);
-                            }
-
-                            return updated;
-                        });
-                    }).then(result => {
-                        if (!result.committed) {
-                            console.error('❌ Wallet transaction was not committed:', {
-                                username: foundUsername,
-                                type,
-                                amount,
-                                path: `users/${foundUsername}`
-                            });
-                            showToast('❌ Wallet update was not committed. Refresh and try again.', 'error');
-                            if (btn) btn.disabled = false;
-                            return;
-                        }
-
-                        txRef.update({ status: 'approved' })
-                            .then(() => {
-                                showToast(`✅ ${foundUsername} - ${type} of ${amount} Birr approved!`, 'success');
-                                loadTransactions();
-                                loadUsers(); // refresh users list
-                            })
-                            .catch(err => {
-                                console.error('❌ Failed to approve transaction:', err);
-                                showToast(`❌ ${err.message}`, 'error');
-                                if (btn) btn.disabled = false;
-                                loadTransactions();
-                                loadUsers();
-                            });
-                    });
-                });
-            });
-        }
-
-        function rejectTransaction(txId) {
-            if (!database) {
-                showToast('Database not available', 'error');
-                return;
-            }
-
-            const btn = document.querySelector(`button[data-txid="${txId}"].reject`);
-            if (btn) btn.disabled = true;
-
-            const txRef = database.ref('transactions/' + txId);
-            txRef.update({ status: 'rejected' })
-                .then(() => {
-                    showToast('❌ Transaction rejected', 'error');
-                    loadTransactions();
-                    loadUsers();
-                })
-                .catch(err => {
-                    console.error('❌ Failed to reject:', err);
-                    showToast(`❌ ${err.message}`, 'error');
-                    if (btn) btn.disabled = false;
-                });
-        }
-
-        // ============================================================
-        //  BUTTON HANDLERS
-        // ============================================================
-        document.getElementById('loadUsersBtn').onclick = () => {
-            loadUsers();
-        };
-
-        document.getElementById('debugBtn').onclick = () => {
-            if (!database) {
-                showToast('Database not available', 'error');
-                return;
-            }
-            const usersRef = database.ref('users');
-            usersRef.once('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    console.log('📋 All users:', data);
-                    showToast(`✅ ${Object.keys(data).length} users found. Check console.`, 'success');
-                } else {
-                    console.warn('❌ No users found.');
-                    showToast('❌ No users found. Check Firebase permissions.', 'error');
-                }
-            }).catch(err => {
-                console.error('❌ Debug error:', err);
-                showToast(`❌ Error: ${err.message}`, 'error');
-            });
-        };
-
-        // ============================================================
-        //  REFRESH
-        // ============================================================
-        document.getElementById('refreshBtn').onclick = () => {
-            if (database) {
-                database.ref('transactions').off();
-                database.ref('users').off();
-                loadUsers();
-                loadTransactions();
-                document.getElementById('adminStatus').textContent = '🔄 Refreshing...';
-                setTimeout(() => {
-                    document.getElementById('adminStatus').textContent = '🟢 Online';
-                    document.getElementById('statusDot').className = 'dot online';
-                    showToast('✅ Refreshed successfully', 'success');
-                }, 500);
-            }
-        };
-
-        // ============================================================
-        //  INIT
-        // ============================================================
-        initLocalAuth();
-        if (database) {
-            console.log('✅ Admin server ready (local authentication)');
-            console.log('ℹ️ Login accounts are stored only in localStorage.');
-            console.log('ℹ️ Screen Clear only clears the visible lists; it does not delete Firebase data.');
-        } else {
-            document.getElementById('adminStatus').textContent = '🔴 Offline - Check Firebase config';
-            document.getElementById('statusDot').className = 'dot offline';
-        }
-    </script>
+      }
+    }
+    const hours=Array.from({length:24},(_,hour)=>({hour,games:0,total:0,unknown:0}));
+    let skipped=0;
+    all.forEach(g=>{
+      const h=hourFromRecord(g), n=humanCount(g);
+      if(h===null || n===null){skipped++;return;}
+      hours[h].games++; hours[h].total+=n;
+    });
+    const hourly=hours.map(x=>x.games?x.total/x.games:0);
+    const daily=hourly.reduce((a,b)=>a+b,0)/24;
+    const peak=Math.max(...hourly);
+    $("avg").textContent=daily.toFixed(2)+" (≈ "+Math.round(daily)+")";
+    $("peak").textContent=peak.toFixed(2);
+    $("games").textContent=hours.reduce((a,x)=>a+x.games,0);
+    $("hours").textContent=hours.filter(x=>x.games>0).length+" / 24";
+    $("formula").innerHTML=`<strong>Hourly averages:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br><strong>Daily 24-hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br><span class="note">For a multi-day date range, this shows the mean of the hourly averages across the selected records; select one date for a single-day report.</span>`;
+    $("rows").innerHTML=hours.map(x=>{
+      const a=x.games?x.total/x.games:0;
+      return `<tr><td>${fmtHour(x.hour)}</td><td>${x.games}</td><td>${x.total}</td><td>${a.toFixed(2)}</td><td>${a.toFixed(2)}</td></tr>`;
+    }).join("");
+    setStatus(`Read ${all.length} saved records for ${from} to ${to} (${TZ}). ${skipped?skipped+" record(s) skipped because timestamp or human-player count was missing.":""} No live listeners are running.`, "ok");
+  }catch(e){
+    console.error(e);
+    let message=e && e.message ? e.message : String(e);
+    if(/permission_denied|PERMISSION_DENIED/i.test(message)) message="Firebase denied the read. Check Realtime Database rules/authentication for analytics/gameHistory.";
+    $("avg").textContent="—";$("peak").textContent="—";$("games").textContent="—";$("hours").textContent="—";
+    $("rows").innerHTML='<tr><td colspan="5">Could not load records.</td></tr>';
+    setStatus("Could not read Firebase analytics: "+message,"error");
+  }
+}
+$("load").onclick=load;
+$("refresh").onclick=load;
+</script>
 </body>
 </html>
