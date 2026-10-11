@@ -17,18 +17,13 @@ button.ghost{background:#1a2440;color:#cfd8f0;border:1px solid #2b3860}
 .formula{font-size:14px;color:#d8def0;line-height:1.6}.formula strong{color:#ffd75a}
 table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{padding:10px;border-bottom:1px solid #26314c;text-align:right}th:first-child,td:first-child{text-align:left}th{color:#8e9ab8;font-size:11px}
 .note{color:#9ba7c2;font-size:12px;line-height:1.55}.warning{color:#ffd36b}.ok{color:#8affb0}.error{color:#ff8585}
-pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding:12px;color:#b9c4e0;font-size:11px;line-height:1.5;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding:12px;color:#b9c4e0;font-size:11px;line-height:1.5;max-height:360px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}
-
-/* --- Tabs --- */
 .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .tab{padding:10px 18px;border-radius:12px;background:#141b30;border:1px solid #25304b;color:#9ba7c2;font-weight:700;cursor:pointer;font-size:14px;transition:all .15s}
 .tab:hover{background:#1a2440;color:#eef2ff}
 .tab.active{background:linear-gradient(135deg,#ffd75a,#efaa24);color:#17120a;border-color:transparent}
-.tabpane{display:none}
-.tabpane.active{display:block}
-
-/* --- Referrals --- */
+.tabpane{display:none}.tabpane.active{display:block}
 .ref-list{margin-top:10px}
 .referrer-block{background:#0d1324;border:1px solid #25304b;border-radius:14px;margin-bottom:8px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .referrer-block:hover{border-color:#3a4870}
@@ -41,6 +36,7 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
 .referrer-name-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .referrer-name{font-weight:700;color:#eef2ff;word-break:break-word}
 .referrer-id{font-size:11px;color:#8e9ab8;font-family:monospace}
+.referrer-src{font-size:10px;color:#6b7794;margin-top:1px}
 .badge-group{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .referrer-count{background:#1a2440;color:#ffd75a;padding:4px 11px;border-radius:10px;font-weight:800;font-size:13px;min-width:46px;text-align:center}
 .referrer-earn{background:linear-gradient(135deg,#3a2f14,#1f1a0b);color:#ffd75a;padding:4px 11px;border-radius:10px;font-weight:800;font-size:12px;border:1px solid #5a4a1c;white-space:nowrap}
@@ -53,14 +49,11 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
 .referred-item .r-name{flex:1;color:#d8def0;word-break:break-word}
 .referred-item .r-id{color:#8e9ab8;font-family:monospace;font-size:11px}
 .referred-item .r-ts{color:#8e9ab8;font-size:11px;font-family:monospace;min-width:80px;text-align:right}
-.referred-item .r-earn{color:#8affb0;font-size:12px;font-weight:700;min-width:72px;text-align:right}
+.referred-item .r-earn{color:#8affb0;font-size:12px;font-weight:700;min-width:82px;text-align:right}
 .search-box{position:relative}
 .search-box input{padding-left:34px}
 .search-box::before{content:"🔍";position:absolute;left:11px;top:calc(50% + 8px);transform:translateY(-50%);font-size:13px;opacity:.7;pointer-events:none}
 .empty-msg{color:#8e9ab8;text-align:center;padding:30px;font-size:13px}
-.expand-hint{font-size:11px;color:#6b7794;margin-left:auto;font-weight:400}
-
-/* Referral metrics — 3 columns on desktop */
 #tab-referred .grid{grid-template-columns:repeat(3,1fr)}
 @media(max-width:700px){#tab-referred .grid{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -77,7 +70,6 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
     <button class="tab" data-tab="referred">👥 Referred</button>
   </div>
 
-  <!-- ============ ANALYTICS TAB ============ -->
   <div id="tab-analytics" class="tabpane active">
     <div class="card">
       <div class="controls">
@@ -97,10 +89,7 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
       <div class="metric"><b id="hours">—</b><span>Hours with data</span></div>
     </div>
 
-    <div class="card">
-      <h3>Daily calculation</h3>
-      <div id="formula" class="formula">Select a date and load data.</div>
-    </div>
+    <div class="card"><h3>Daily calculation</h3><div id="formula" class="formula">Select a date and load data.</div></div>
 
     <div class="card">
       <h3>Hourly breakdown</h3>
@@ -111,23 +100,14 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
       </div>
     </div>
 
-    <div class="card">
-      <h3>Diagnostics <span class="note">(click "Diagnose Firebase" above)</span></h3>
-      <pre id="debug" class="debug">No diagnostics yet. Press "Diagnose Firebase" to see what paths and records actually exist.</pre>
-    </div>
+    <div class="card"><h3>Diagnostics <span class="note">(click "Diagnose Firebase" above)</span></h3><pre id="debug" class="debug">No diagnostics yet.</pre></div>
 
     <div class="card">
       <h3>Firebase data format the loader expects</h3>
-      <div class="note">
-        Primary paths: <code>/analytics/gameHistory/YYYY-MM-DD/room_15/&lt;gameId&gt;</code> and <code>/analytics/gameHistory/YYYY-MM-DD/room_30/&lt;gameId&gt;</code>.<br>
-        Fallback paths: <code>/gameHistory/…</code>, <code>/analytics/games/…</code>.
-        <br><br>
-        Each round should contain <b>at least one</b> of: <code>timestamp</code>, <code>startedAt</code>, <code>createdAt</code>, <code>endedAt</code>, <code>ts</code>, <code>time</code>, <code>hour</code> — or a Unix‑timestamp record key. It must also contain a human player count via <code>humanPlayerCount</code>, <code>humanCount</code>, <code>humans</code>, <code>humanPlayers</code>, <code>realPlayers</code>, <code>playerCount</code> (with <code>botsExcluded:true</code>), <code>totalPlayers</code>, or a <code>players</code> object where bots are marked <code>isBot: true</code>.
-      </div>
+      <div class="note">Primary: <code>/analytics/gameHistory/YYYY-MM-DD/room_15/&lt;gameId&gt;</code> and <code>/room_30/</code>. Fallbacks: <code>/gameHistory/…</code>, <code>/analytics/games/…</code>. Each round needs a timestamp (or a Unix‑timestamp key) and a human count.</div>
     </div>
   </div>
 
-  <!-- ============ REFERRED TAB ============ -->
   <div id="tab-referred" class="tabpane">
     <div class="card">
       <div class="controls">
@@ -142,8 +122,19 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
         </div>
         <button id="loadRef">Load referrals</button>
         <button id="diagRef" class="ghost">🔍 Diagnose Referrals</button>
+        <button id="diagEarn" class="ghost">💰 Diagnose Earnings</button>
       </div>
       <div id="refStatus" class="status">Ready.</div>
+    </div>
+
+    <div class="card">
+      <h3>Earnings source override <span class="note">(leave empty for auto-detect: <code>referral_earnings</code>)</span></h3>
+      <div class="controls">
+        <div class="field"><label>NODE PATH (use {id} for referrer ID)</label><input id="earnNodePath" type="text" placeholder="e.g. referralEarnings/{id}"></div>
+        <div class="field"><label>USER FIELD (on /users/{id})</label><input id="earnUserField" type="text" placeholder="e.g. referral_earnings"></div>
+        <button id="applyEarn">Apply &amp; reload</button>
+      </div>
+      <div class="note" style="margin-top:8px">Auto-detect already looks for <code>referral_earnings</code> on each user record. Only use this override if your field is different.</div>
     </div>
 
     <div class="grid">
@@ -157,40 +148,15 @@ pre.debug{background:#080b16;border:1px solid #25304b;border-radius:12px;padding
 
     <div class="card">
       <h3>Referrers &amp; their referred players</h3>
-      <div class="note" style="margin-bottom:12px">
-        Click a referrer row to expand and see the players they referred, plus any per‑referral earnings. Earnings are read from <code>/referralEarnings</code>, <code>/referralBalances</code>, <code>/referralCommissions</code>, or a per‑user field like <code>referralEarnings</code> / <code>referralBalance</code> on <code>/users</code>, <code>/players</code>, <code>/profiles</code>.
-      </div>
+      <div class="note" style="margin-bottom:12px">Click a referrer to expand and see referred players, plus per‑referral earnings when available.</div>
       <div id="refList" class="ref-list"><div class="empty-msg">Press "Load referrals" to fetch.</div></div>
     </div>
 
-    <div class="card">
-      <h3>Referral diagnostics <span class="note">(click "Diagnose Referrals" above)</span></h3>
-      <pre id="refDebug" class="debug">No diagnostics yet.</pre>
-    </div>
-
-    <div class="card">
-      <h3>Referral data format the loader expects</h3>
-      <div class="note">
-        <b>Referral map</b> — <code>/referrals/&lt;referrerId&gt;/&lt;referredId&gt;</code> = <code>true</code> or <code>{ name, timestamp }</code>. Also tried: <code>/userReferrals</code>, <code>/referralData</code>, <code>/referralTree</code>, <code>/invites</code>.
-        <br><br>
-        <b>Per‑user <code>referredBy</code></b> — <code>/users/&lt;userId&gt;/referredBy</code> = <code>referrerId</code> or <code>{ referrerId, timestamp }</code>. The loader inverts this. Also tried on <code>/players</code>, <code>/profiles</code>, <code>/accounts</code>.
-        <br><br>
-        <b>Earnings</b> — one of these shapes (any one is enough):
-        <br>• <code>/referralEarnings/&lt;referrerId&gt;</code> = number
-        <br>• <code>/referralEarnings/&lt;referrerId&gt;</code> = <code>{ total, currency }</code>
-        <br>• <code>/referralCommissions/&lt;referrerId&gt;/&lt;referredId&gt;</code> = number (per‑referral, summed automatically)
-        <br>• <code>/users/&lt;referrerId&gt;/referralEarnings</code> (or <code>referralBalance</code>, <code>commissionEarned</code>, <code>earnings</code>) = number
-        <br><br>
-        Also probed: <code>/referralBalances</code>, <code>/referral_earnings</code>, <code>/referral_balance</code>, <code>/referralRewards</code>.
-      </div>
-    </div>
+    <div class="card"><h3>Diagnostics <span class="note">(Referrals or Earnings)</span></h3><pre id="refDebug" class="debug">No diagnostics yet.</pre></div>
   </div>
 </div>
 
 <script>
-/* ============================================================
-   Firebase
-   ============================================================ */
 const firebaseConfig={
   apiKey:"AIzaSyA2VCeCTCx_NAcsxK-es1DCTmRjOD43dt4",
   authDomain:"renewed-8fe38.firebaseapp.com",
@@ -206,9 +172,6 @@ const db=firebase.database();
 const $=id=>document.getElementById(id);
 const TZ="Africa/Addis_Ababa";
 
-/* ============================================================
-   Tabs
-   ============================================================ */
 document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
@@ -218,9 +181,6 @@ document.querySelectorAll(".tab").forEach(t=>{
   };
 });
 
-/* ============================================================
-   Shared helpers
-   ============================================================ */
 function ethiopiaDate(d=new Date()){
   const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
   const v=Object.fromEntries(parts.map(p=>[p.type,p.value]));
@@ -265,9 +225,7 @@ function fmtAmount(n, currency){
   return currency ? `${s} ${currency}` : s;
 }
 
-/* ============================================================
-   ANALYTICS TAB
-   ============================================================ */
+/* ============ ANALYTICS ============ */
 function setStatus(t,c=""){ $("status").textContent=t; $("status").className="status "+c; }
 function dbg(line){ const el=$("debug"); el.textContent += "\n" + line; }
 function dbgReset(first){ $("debug").textContent = first || ""; }
@@ -378,7 +336,6 @@ async function load(){
 
     const sample = all[0];
     dbg(`Sample round (key=${sample._id}) fields: ${Object.keys(sample).filter(k=>!k.startsWith('_')).join(', ')}`);
-    dbg(`Sample → hour=${hourFromRecord(sample, sample._id)}  humanCount=${humanCount(sample)}`);
 
     const hours=Array.from({length:24},(_,hour)=>({hour,games:0,total:0}));
     let skipped=0;
@@ -398,14 +355,14 @@ async function load(){
     $("games").textContent=hours.reduce((a,x)=>a+x.games,0);
     $("hours").textContent=hours.filter(x=>x.games>0).length+" / 24";
 
-    $("formula").innerHTML=`<strong>Hourly averages:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br><strong>Daily 24-hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br><span class="note">Processed ${all.length} round(s) individually. ${skipped} round(s) skipped (no timestamp/hour or no human count).</span>`;
+    $("formula").innerHTML=`<strong>Hourly averages:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")}<br><strong>Daily 24-hour average:</strong> ${hourly.map(x=>x.toFixed(2)).join(" + ")} ÷ 24 = <strong>${daily.toFixed(2)}</strong> ≈ <strong>${Math.round(daily)}</strong> players per game.<br><span class="note">Processed ${all.length} round(s). ${skipped} round(s) skipped.</span>`;
 
     $("rows").innerHTML=hours.map(x=>{
       const a=x.games?x.total/x.games:0;
       return `<tr><td>${fmtHour(x.hour)}</td><td>${x.games}</td><td>${x.total}</td><td>${a.toFixed(2)}</td><td>${a.toFixed(2)}</td></tr>`;
     }).join("");
 
-    setStatus(`✅ Read ${all.length} saved round(s) for ${from} → ${to}. ${skipped?skipped+" skipped.":"All usable."} No live listeners.`,"ok");
+    setStatus(`✅ Read ${all.length} saved round(s) for ${from} → ${to}. ${skipped?skipped+" skipped.":"All usable."}`,"ok");
   }catch(e){
     console.error(e);
     let message=e && e.message ? e.message : String(e);
@@ -425,16 +382,16 @@ async function discoverAnalytics(){
       if(!snap.exists()){ lines.push(`${root} → (empty)`); continue; }
       const val=snap.val();
       const keys=Object.keys(val);
-      lines.push(`${root} → ${keys.length} top-level key(s): ${keys.slice(0,5).join(", ")}${keys.length>5?"…":""}`);
+      lines.push(`${root} → ${keys.length} key(s): ${keys.slice(0,5).join(", ")}`);
       for(const k of keys.slice(0,2)){
         const child=val[k];
         if(child && typeof child==="object"){
           const childKeys=Object.keys(child);
-          lines.push(`    ${root}/${k} → [${childKeys.slice(0,6).join(", ")}${childKeys.length>6?"…":""}]`);
+          lines.push(`    ${root}/${k} → [${childKeys.slice(0,6).join(", ")}]`);
           const firstRoom=childKeys[0];
           if(child[firstRoom] && typeof child[firstRoom]==="object"){
             const games=Object.keys(child[firstRoom]);
-            lines.push(`        ${root}/${k}/${firstRoom} → ${games.length} entr(ies). First key=${games[0]}`);
+            lines.push(`        ${root}/${k}/${firstRoom} → ${games.length} entr(ies)`);
             const firstGame=child[firstRoom][games[0]];
             if(firstGame && typeof firstGame==="object"){
               lines.push(`        Sample fields: ${Object.keys(firstGame).slice(0,14).join(", ")}`);
@@ -455,76 +412,136 @@ async function diagnose(){
   catch(e){ dbg("Diagnostics failed: "+e.message); setStatus("Diagnostics failed.","error"); }
 }
 
-/* ============================================================
-   REFERRED TAB
-   ============================================================ */
+/* ============ REFERRED ============ */
 function setRefStatus(t,c=""){ $("refStatus").textContent=t; $("refStatus").className="status "+c; }
 function refDbg(line){ const el=$("refDebug"); el.textContent += "\n" + line; }
 function refDbgReset(first){ $("refDebug").textContent = first || ""; }
 
-let refData = { referrers:{}, source:"(none)", earningsSource:null };
+let refData = { referrers:{}, source:"(none)" };
 
-/* ---- Per-user info cache (name + earnings) ---- */
-const userInfoCache = new Map(); // id → { name, earnings, currency }
-const EARNINGS_USER_FIELDS = [
-  "referralEarnings","referralBalance","referralEarning","referral_earning",
-  "referralIncome","commissionEarned","refEarnings","referralReward",
-  "referralRewards","earnings","totalEarnings","refEarningsTotal"
-];
-const EARNINGS_MAP_NODES = [
-  "referralEarnings","referralBalances","referral_earnings","referral_balance",
-  "referralCommissions","referralRewards","referral_rewards","referralPayouts"
+/* ---------- Earnings detection — includes referral_earnings (snake_case) ---------- */
+const KNOWN_EARN_FIELDS = [
+  // snake_case variants (matching your schema)
+  "referral_earnings","referral_earning","referral_balance","referral_income",
+  "referral_commission","referral_commissions","referral_reward","referral_rewards",
+  "ref_earnings","ref_earning","ref_balance","ref_commission","ref_income",
+  "commission_earned","commission_balance","commission_earning",
+  "team_earnings","team_commission","team_income","team_bonus",
+  "total_earnings","total_commission","total_referral_earnings","total_referral_earning",
+  "referral_amount","ref_amount","referral_payout","ref_payout",
+  "referral_bonus","referral_points","reward_balance","reward_points",
+  // camelCase variants
+  "referralEarnings","referralEarning","referralBalance","referralIncome",
+  "referralCommission","referralCommissions","referralReward","referralRewards",
+  "referralAmount","referralPayout","referralBonus","referralPoints",
+  "refEarnings","refEarning","refBalance","refCommission","refIncome",
+  "commissionEarned","commissionBalance","commissionEarning",
+  "teamEarnings","teamCommission","teamIncome","teamBonus",
+  "totalEarnings","totalCommission","totalReferralEarnings",
+  "rewardBalance","rewardPoints","earnings","balance",
+  // Pascal
+  "ReferralEarnings","ReferralBalance","TotalEarnings"
 ];
 
+function isEarnField(name){
+  if(!name) return false;
+  const n = String(name).toLowerCase();
+  if(KNOWN_EARN_FIELDS.some(f=>f.toLowerCase()===n)) return true;
+  if(/earn|commission|payout/.test(n)) return true;
+  if(/reward|bonus|income/.test(n) && /refer|ref|team|invite/.test(n)) return true;
+  if(/^(referral|ref|team|invite|referrer)[_\-]?(amount|total|balance|value|sum|earn|earning|earnings|income|commission|reward|bonus|payout)$/.test(n)) return true;
+  return false;
+}
+function pickCurrency(obj){
+  if(!obj || typeof obj!=="object") return null;
+  return obj.currency ?? obj.currency_code ?? obj.currencyCode ?? obj.currencySymbol ?? null;
+}
+function smartEarningsFromObject(obj){
+  if(!obj || typeof obj!=="object") return null;
+  // Pass 1: exact known fields
+  for(const f of KNOWN_EARN_FIELDS){
+    const v = obj[f];
+    if(v!==undefined && v!=="" && v!==null && Number.isFinite(Number(v)))
+      return { amount:Number(v), field:f, currency: pickCurrency(obj) };
+  }
+  // Pass 2: pattern match at top level
+  for(const [k,v] of Object.entries(obj)){
+    if((typeof v === "number" && Number.isFinite(v)) ||
+       (typeof v === "string" && v.trim()!=="" && Number.isFinite(Number(v)))){
+      if(isEarnField(k)) return { amount:Number(v), field:k, currency: pickCurrency(obj) };
+    }
+  }
+  // Pass 3: nested
+  for(const [k,v] of Object.entries(obj)){
+    if(v && typeof v==="object" && !Array.isArray(v)){
+      for(const [k2,v2] of Object.entries(v)){
+        if(typeof v2==="number" && Number.isFinite(v2) && isEarnField(k2))
+          return { amount:v2, field:`${k}.${k2}`, currency: pickCurrency(v) || pickCurrency(obj) };
+      }
+      if(/refer|earn|commission|reward|bonus|team|payout/i.test(k)){
+        const t = v.total ?? v.amount ?? v.balance ?? v.sum ?? v.value ?? v.earnings;
+        if(t!==undefined && Number.isFinite(Number(t)))
+          return { amount:Number(t), field:`${k}.total`, currency: pickCurrency(v) || pickCurrency(obj) };
+      }
+    }
+  }
+  return null;
+}
+
+/* ---------- Name resolution (supports snake_case) ---------- */
+function pickName(obj){
+  if(!obj || typeof obj!=="object") return null;
+  const candidates = [
+    "display_name","displayName","player_name","playerName","full_name","fullName",
+    "user_name","userName","username","name","nickname","nick_name","firstName","first_name"
+  ];
+  for(const f of candidates){
+    const v = obj[f];
+    if(v && typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+const userInfoCache = new Map();
 async function resolveUser(id, hints){
   if(!id) return {};
   if(userInfoCache.has(id)) return userInfoCache.get(id);
   const info = {};
-  // Hints from record
   if(hints && typeof hints==="object"){
-    const n = hints.name ?? hints.username ?? hints.displayName ?? hints.playerName;
-    if(n && typeof n==="string") info.name = n;
-    if(info.earnings === undefined){
-      for(const f of EARNINGS_USER_FIELDS){
-        if(hints[f] !== undefined && Number.isFinite(Number(hints[f]))){
-          info.earnings = Number(hints[f]);
-          info.currency = hints.currency ?? hints.currencyCode ?? hints.currencySymbol;
-          break;
-        }
-      }
-    }
+    const n = pickName(hints);
+    if(n) info.name = n;
+    const se = smartEarningsFromObject(hints);
+    if(se){ info.earnings = se.amount; info.currency = se.currency; info.earnField = se.field; }
   }
-  // Database lookups
-  if(!info.name || info.earnings === undefined){
-    for(const base of ["users","players","profiles","accounts"]){
-      try{
-        const snap = await db.ref(`${base}/${id}`).once("value");
-        const v = snap.val();
-        if(v && typeof v==="object"){
-          if(!info.name){
-            const n = v.name ?? v.username ?? v.displayName ?? v.playerName ?? v.fullName;
-            if(n) info.name = n;
-          }
-          if(info.earnings === undefined){
-            for(const f of EARNINGS_USER_FIELDS){
-              if(v[f] !== undefined && Number.isFinite(Number(v[f]))){
-                info.earnings = Number(v[f]);
-                info.currency = v.currency ?? v.currencyCode ?? v.currencySymbol;
-                break;
-              }
-            }
-          }
-          if(!info.currency && (v.currency || v.currencyCode)) info.currency = v.currency ?? v.currencyCode;
-          if(info.name && info.earnings !== undefined) break;
+  for(const base of ["users","players","profiles","accounts"]){
+    try{
+      const snap = await db.ref(`${base}/${id}`).once("value");
+      const v = snap.val();
+      if(v && typeof v==="object"){
+        if(!info.name){
+          const n = pickName(v);
+          if(n) info.name = n;
         }
-      }catch(e){ /* ignore */ }
-    }
+        if(info.earnings === undefined){
+          const se = smartEarningsFromObject(v);
+          if(se){ info.earnings = se.amount; info.currency = se.currency; info.earnField = se.field; }
+        }
+        if(!info.currency) info.currency = pickCurrency(v);
+        if(info.name && info.earnings !== undefined) break;
+      }
+    }catch(e){}
   }
   userInfoCache.set(id, info);
   return info;
 }
 
-/* ---- Load a top-level earnings map (referrerId → number | { total } | { referredId: amount }) ---- */
+const EARNINGS_MAP_NODES = [
+  "referralEarnings","referralBalances","referral_earnings","referral_balance",
+  "referralCommissions","referralRewards","referral_rewards","referralPayouts",
+  "commissions","userCommissions","user_commissions","earnings","rewards",
+  "referral_income","refEarnings","teamEarnings","referral_commissions"
+];
+
 async function loadEarningsMap(referrers){
   for(const node of EARNINGS_MAP_NODES){
     try{
@@ -533,17 +550,18 @@ async function loadEarningsMap(referrers){
       let handled = false;
       for(const [rid, val] of Object.entries(data)){
         if(!referrers[rid]) continue;
-        if(Number.isFinite(Number(val))){
+        if(Number.isFinite(Number(val)) && val!=="" && val!==null){
           referrers[rid].earnings = (referrers[rid].earnings||0) + Number(val);
+          referrers[rid].earnField = node;
           handled = true;
         } else if(val && typeof val==="object"){
-          const total = val.total ?? val.amount ?? val.balance ?? val.earnings ?? val.sum ?? val.referralEarnings;
+          const total = val.total ?? val.amount ?? val.balance ?? val.earnings ?? val.sum ?? val.value;
           if(total !== undefined && Number.isFinite(Number(total))){
             referrers[rid].earnings = (referrers[rid].earnings||0) + Number(total);
-            referrers[rid].currency = val.currency ?? val.currencyCode ?? referrers[rid].currency;
+            referrers[rid].currency = val.currency ?? val.currency_code ?? val.currencyCode ?? referrers[rid].currency;
+            referrers[rid].earnField = `${node}.total`;
             handled = true;
           } else {
-            // Treat children as per-referred commissions
             let any = false;
             for(const [refdId, amt] of Object.entries(val)){
               const raw = (amt && typeof amt==="object") ? (amt.amount ?? amt.commission ?? amt.earnings ?? amt.value) : amt;
@@ -552,23 +570,70 @@ async function loadEarningsMap(referrers){
                 referrers[rid].perReferred = referrers[rid].perReferred || {};
                 referrers[rid].perReferred[refdId] = (referrers[rid].perReferred[refdId]||0) + n;
                 referrers[rid].earnings = (referrers[rid].earnings||0) + n;
-                if(amt && typeof amt==="object"){
-                  referrers[rid].currency = referrers[rid].currency || amt.currency || amt.currencyCode;
-                }
+                if(amt && typeof amt==="object") referrers[rid].currency = referrers[rid].currency || amt.currency || amt.currency_code || amt.currencyCode;
                 any = true;
               }
             }
-            if(any) handled = true;
+            if(any){ handled = true; referrers[rid].earnField = `${node}.<per-referred>`; }
           }
         }
       }
       if(handled) return node;
-    }catch(e){ /* ignore and try next */ }
+    }catch(e){}
   }
   return null;
 }
 
-/* ---- Try referral-map style node ---- */
+async function applyEarningsOverrides(referrers){
+  const nodePath = ($("earnNodePath").value||"").trim();
+  const userField = ($("earnUserField").value||"").trim();
+  if(!nodePath && !userField) return null;
+  let handled = 0, label = null;
+
+  if(nodePath){
+    for(const rid of Object.keys(referrers)){
+      const path = nodePath.replace(/\{id\}/g, rid);
+      try{
+        const v = await readPath(path);
+        if(v===null || v===undefined) continue;
+        let amt = null, curr = null;
+        if(Number.isFinite(Number(v)) && v!=="") amt = Number(v);
+        else if(v && typeof v==="object"){
+          const t = v.total ?? v.amount ?? v.balance ?? v.value ?? v.earnings ?? v.sum;
+          if(t!==undefined && Number.isFinite(Number(t))) amt = Number(t);
+          curr = v.currency ?? v.currency_code ?? v.currencyCode ?? null;
+        }
+        if(amt!==null){
+          referrers[rid].earnings = (referrers[rid].earnings||0) + amt;
+          if(curr && !referrers[rid].currency) referrers[rid].currency = curr;
+          referrers[rid].earnField = nodePath;
+          handled++;
+        }
+      }catch(e){}
+    }
+    if(handled){ label = `node "${nodePath}"`; }
+  }
+  if(userField){
+    let h2 = 0;
+    for(const rid of Object.keys(referrers)){
+      try{
+        const v = await readPath(`users/${rid}`);
+        if(!v) continue;
+        const val = v[userField];
+        if(val!==undefined && val!==null && val!=="" && Number.isFinite(Number(val))){
+          referrers[rid].earnings = (referrers[rid].earnings||0) + Number(val);
+          const c = pickCurrency(v);
+          if(c && !referrers[rid].currency) referrers[rid].currency = c;
+          referrers[rid].earnField = userField;
+          h2++;
+        }
+      }catch(e){}
+    }
+    if(h2){ label = label ? `${label} + field "${userField}"` : `field "${userField}"`; handled += h2; }
+  }
+  return handled ? label : null;
+}
+
 async function tryReferralMap(path){
   const node = await readPath(path);
   if(!node || typeof node!=="object") return null;
@@ -579,8 +644,8 @@ async function tryReferralMap(path){
     for(const [refdId, meta] of Object.entries(children)){
       let ts=0, name=null, hints=null;
       if(meta && typeof meta==="object"){
-        ts = asMillis(meta.timestamp ?? meta.ts ?? meta.createdAt ?? meta.time ?? 0) || keyToMillis(refdId);
-        name = meta.name ?? meta.username ?? meta.displayName ?? meta.playerName ?? null;
+        ts = asMillis(meta.timestamp ?? meta.ts ?? meta.created_at ?? meta.createdAt ?? meta.time ?? 0) || keyToMillis(refdId);
+        name = pickName(meta);
         hints = meta;
       } else if(meta === true || meta === 1 || meta === "true"){
         ts = keyToMillis(refdId);
@@ -592,7 +657,6 @@ async function tryReferralMap(path){
   return Object.keys(referrers).length ? referrers : null;
 }
 
-/* ---- Build referrals by inverting referredBy ---- */
 async function tryInvertReferredBy(base){
   const node = await readPath(base);
   if(!node || typeof node!=="object") return null;
@@ -600,17 +664,17 @@ async function tryInvertReferredBy(base){
   let found=0;
   for(const [userId, u] of Object.entries(node)){
     if(!u || typeof u!=="object") continue;
-    const rb = u.referredBy ?? u.referrer ?? u.referred_by ?? u.invitedBy ?? u.inviter ?? u.refBy;
+    const rb = u.referredBy ?? u.referrer ?? u.referred_by ?? u.referred_by_id ?? u.invitedBy ?? u.invited_by ?? u.inviter ?? u.refBy ?? u.ref_by;
     if(!rb) continue;
     let refId=null, ts=0;
     if(typeof rb === "string"){ refId = rb; }
-    else if(typeof rb === "object"){ refId = rb.id ?? rb.uid ?? rb.referrerId ?? rb.userId; ts = asMillis(rb.timestamp ?? rb.ts ?? rb.createdAt ?? 0); }
+    else if(typeof rb === "object"){ refId = rb.id ?? rb.uid ?? rb.referrerId ?? rb.referrer_id ?? rb.userId ?? rb.user_id; ts = asMillis(rb.timestamp ?? rb.ts ?? rb.created_at ?? rb.createdAt ?? 0); }
     if(!refId) continue;
     found++;
     if(!referrers[refId]) referrers[refId] = { id:refId, referred: [] };
     referrers[refId].referred.push({
       id: userId,
-      name: u.name ?? u.username ?? u.displayName ?? u.playerName ?? null,
+      name: pickName(u),
       ts,
       _hints: u
     });
@@ -618,7 +682,6 @@ async function tryInvertReferredBy(base){
   return found ? referrers : null;
 }
 
-/* ---- Main referral loader ---- */
 async function loadReferrals(){
   setRefStatus("Fetching referral data from Firebase…");
   refDbgReset("Referral load — " + new Date().toISOString());
@@ -628,49 +691,43 @@ async function loadReferrals(){
   try{
     let referrers = null, source = null;
 
-    // 1) Referral-map style
     for(const p of ["referrals","userReferrals","referralData","referralTree","invites","inviteData"]){
       const r = await tryReferralMap(p);
       if(r){ referrers = r; source = p; break; }
       refDbg(`${p} → (empty or not a referral map)`);
     }
-
-    // 2) Invert referredBy
     if(!referrers){
       for(const base of ["users","players","profiles","accounts"]){
         const r = await tryInvertReferredBy(base);
         if(r){ referrers = r; source = base+"/*/referredBy"; break; }
-        refDbg(`${base}/*/referredBy → (no referredBy fields found)`);
+        refDbg(`${base}/*/referredBy → (no referredBy fields)`);
       }
     }
-
     if(!referrers){
       refDbg("No referral data found at any known path.");
       ["refReferrers","refReferred","refEarn","refTop","refTopEarner","refAvg"].forEach(id=>$(id).textContent="—");
-      $("refList").innerHTML='<div class="empty-msg">No referral records found. Click <b>Diagnose Referrals</b> to inspect what exists in Firebase.</div>';
+      $("refList").innerHTML='<div class="empty-msg">No referral records found. Click <b>Diagnose Referrals</b>.</div>';
       setRefStatus("No referral data found. See diagnostics.","error");
       return;
     }
 
     refDbg(`Referral structure source: ${source}`);
-    refDbg(`Referrers found: ${Object.keys(referrers).length}`);
+    refDbg(`Referrers: ${Object.keys(referrers).length}`);
 
-    // 3) Referral earnings — top-level maps first
     const earningsSource = await loadEarningsMap(referrers);
-    if(earningsSource) refDbg(`Referral earnings map loaded from: ${earningsSource}`);
+    if(earningsSource) refDbg(`Top-level earnings map loaded: ${earningsSource}`);
     else refDbg(`No top-level earnings map found in: ${EARNINGS_MAP_NODES.join(", ")}`);
 
-    // 4) Resolve names + per-user earnings
+    const overrideLabel = await applyEarningsOverrides(referrers);
+    if(overrideLabel) refDbg(`Manual override applied: ${overrideLabel}`);
+
     const refIds = Object.keys(referrers);
     const referredIds = new Set();
     for(const r of Object.values(referrers)) (r.referred||[]).forEach(x=>referredIds.add(x.id));
     const allIds = new Set([...refIds, ...referredIds]);
     refDbg(`Resolving ${allIds.size} user record(s)…`);
 
-    // Parallel resolution
     await Promise.all([...allIds].map(async id=>{
-      const hints = referrers[id] ? null : null; // hints attached per-item below
-      // Prefer hints from referred item if available
       let itemHints = null;
       for(const r of Object.values(referrers)){
         const found = (r.referred||[]).find(x=>x.id===id);
@@ -679,46 +736,45 @@ async function loadReferrals(){
       await resolveUser(id, itemHints);
     }));
 
-    // Attach names + earnings
     let resolvedNames = 0, withEarnings = 0;
     for(const [rid, r] of Object.entries(referrers)){
       const info = userInfoCache.get(rid) || {};
-      r.name = r.name || info.name || null;
       if(!r.name && info.name) r.name = info.name;
+      if(r.name) resolvedNames++;
       if(r.earnings === undefined && info.earnings !== undefined){
         r.earnings = info.earnings;
         r.currency = r.currency || info.currency;
+        r.earnField = info.earnField;
       }
-      if(r.name) resolvedNames++;
       if(r.earnings !== undefined) withEarnings++;
-
       for(const x of (r.referred||[])){
         const xi = userInfoCache.get(x.id) || {};
         if(!x.name) x.name = xi.name || null;
-        // If per-referred earnings exist, keep; otherwise if there's only one referred and total exists, don't fabricate
       }
     }
     refDbg(`Names resolved: ${resolvedNames}/${refIds.length}`);
     refDbg(`Referrers with earnings: ${withEarnings}/${refIds.length}`);
+    if(withEarnings){
+      const first = Object.values(referrers).find(r=>r.earnField);
+      if(first) refDbg(`Example: field "${first.earnField}" = ${first.earnings}`);
+    }
 
-    refData = { referrers, source, earningsSource };
+    refData = { referrers, source };
     renderReferrals();
 
     const refCount = refIds.length;
     const referredCount = Object.values(referrers).reduce((a,r)=>a+(r.referred?.length||0),0);
-    const earnSummary = withEarnings ? ` Earnings available for ${withEarnings} referrer(s).` : " No earnings data found.";
-    setRefStatus(`✅ Loaded ${refCount} referrer(s) and ${referredCount} referred player(s) from ${source}.${earnSummary}`,"ok");
+    setRefStatus(`✅ Loaded ${refCount} referrer(s), ${referredCount} referred player(s). ${withEarnings?`Earnings found for ${withEarnings}.`:"No earnings detected."}`,"ok");
   }catch(e){
     console.error(e);
     let msg = e && e.message ? e.message : String(e);
-    if(/permission_denied|PERMISSION_DENIED/i.test(msg)) msg="Firebase denied the read. Check Realtime Database rules for referrals / users.";
+    if(/permission_denied|PERMISSION_DENIED/i.test(msg)) msg="Firebase denied the read. Check Realtime Database rules.";
     refDbg("ERROR: "+msg);
     $("refList").innerHTML='<div class="empty-msg">Could not load referrals.</div>';
     setRefStatus("Could not read referrals: "+msg,"error");
   }
 }
 
-/* ---- Render referral list (collapsed by default) ---- */
 function renderReferrals(){
   const referrers = refData.referrers || {};
   const list = Object.values(referrers);
@@ -734,37 +790,29 @@ function renderReferrals(){
   });
 
   filtered.sort((a,b)=>{
-    if(sortBy==="name"){
-      return (a.name||a.id).toLowerCase().localeCompare((b.name||b.id).toLowerCase());
-    }
+    if(sortBy==="name") return (a.name||a.id).toLowerCase().localeCompare((b.name||b.id).toLowerCase());
     if(sortBy==="recent"){
       const at=Math.max(0,...(a.referred||[]).map(x=>x.ts||0));
       const bt=Math.max(0,...(b.referred||[]).map(x=>x.ts||0));
       return bt-at;
     }
-    if(sortBy==="earnings"){
-      return (b.earnings||0) - (a.earnings||0);
-    }
+    if(sortBy==="earnings") return (b.earnings||0) - (a.earnings||0);
     return (b.referred?.length||0) - (a.referred?.length||0);
   });
 
-  // ---- Metrics (from full set, not filtered) ----
   const totalReferrers = list.length;
   const totalReferred = list.reduce((a,r)=>a+(r.referred?.length||0),0);
   const totalEarnings = list.reduce((a,r)=>a + (Number.isFinite(r.earnings)?r.earnings:0), 0);
   const anyEarnings = list.some(r=>r.earnings !== undefined);
   const topByCount = list.reduce((best,r)=> (r.referred?.length||0) > (best.referred?.length||0) ? r : best, {referred:[]});
   const topByEarnings = list.reduce((best,r)=> (r.earnings||0) > (best.earnings||0) ? r : best, {earnings:0});
+  const defaultCurrency = list.find(r=>r.currency)?.currency || null;
 
   $("refReferrers").textContent = totalReferrers;
   $("refReferred").textContent = totalReferred;
-  $("refEarn").textContent = anyEarnings
-    ? fmtAmount(totalEarnings, topByEarnings.currency || list.find(r=>r.currency)?.currency)
-    : "—";
+  $("refEarn").textContent = anyEarnings ? fmtAmount(totalEarnings, defaultCurrency) : "—";
   $("refTop").textContent = topByCount && topByCount.referred ? `${topByCount.referred.length}` : "—";
-  $("refTopEarner").textContent = anyEarnings
-    ? fmtAmount(topByEarnings.earnings || 0, topByEarnings.currency)
-    : "—";
+  $("refTopEarner").textContent = anyEarnings ? fmtAmount(topByEarnings.earnings || 0, topByEarnings.currency) : "—";
   $("refAvg").textContent = totalReferrers ? (totalReferred/totalReferrers).toFixed(2) : "0.00";
 
   const container = $("refList");
@@ -773,21 +821,17 @@ function renderReferrals(){
     return;
   }
 
-  const defaultCurrency = list.find(r=>r.currency)?.currency || null;
-
   container.innerHTML = filtered.map(r=>{
     const name = r.name || "(no name)";
     const count = r.referred?.length || 0;
-    const earnText = r.earnings !== undefined
-      ? fmtAmount(r.earnings, r.currency || defaultCurrency)
-      : "no earnings";
-    const earnZero = r.earnings === undefined;
+    const hasEarn = r.earnings !== undefined;
+    const earnText = hasEarn ? fmtAmount(r.earnings, r.currency || defaultCurrency) : "";
     const referredSorted = [...(r.referred||[])].sort((a,b)=> (b.ts||0)-(a.ts||0));
     const items = referredSorted.map(x=>{
       const xname = x.name || "(no name)";
       const perEarn = r.perReferred && r.perReferred[x.id];
       const earnCell = perEarn !== undefined
-        ? `<span class="r-earn">+${fmtAmount(perEarn, r.currency || defaultCurrency)}</span>`
+        ? `<span class="r-earn">+${escapeHtml(fmtAmount(perEarn, r.currency || defaultCurrency))}</span>`
         : ``;
       return `<div class="referred-item">
         <span class="dot"></span>
@@ -799,22 +843,22 @@ function renderReferrals(){
     }).join("") || '<div class="referred-item" style="color:#8e9ab8">No referred players recorded.</div>';
 
     return `<div class="referrer-block" data-rid="${escapeHtml(r.id)}">
-      <div class="referrer-head" title="Click to ${'expand'}">
+      <div class="referrer-head">
         <span class="caret">▶</span>
         <span class="referrer-name-wrap">
           <span class="referrer-name">${escapeHtml(name)}</span>
           <span class="referrer-id">${escapeHtml(r.id)}</span>
+          ${hasEarn && r.earnField?`<span class="referrer-src">earnings from: ${escapeHtml(r.earnField)}</span>`:""}
         </span>
         <span class="badge-group">
-          ${anyEarnings && !earnZero ? `<span class="referrer-earn">💰 ${escapeHtml(earnText)}</span>` : ``}
-          ${anyEarnings && earnZero ? `<span class="referrer-earn zero">—</span>` : ``}
+          ${hasEarn ? `<span class="referrer-earn" title="${escapeHtml(r.earnField||'')}">💰 ${escapeHtml(earnText)}</span>` : ``}
           <span class="referrer-count">${count}</span>
         </span>
       </div>
       <div class="referrer-body" hidden>
         <div class="referrer-body-inner">
           <div class="note" style="margin-bottom:6px">
-            <b>${count}</b> referred player${count===1?"":"s"}${r.earnings!==undefined?` · Earned: <span style="color:#8affb0;font-weight:700">${escapeHtml(fmtAmount(r.earnings, r.currency || defaultCurrency))}</span>`:""}
+            <b>${count}</b> referred player${count===1?"":"s"}${hasEarn?` · Earned: <span style="color:#8affb0;font-weight:700">${escapeHtml(fmtAmount(r.earnings, r.currency || defaultCurrency))}</span>`:""}
           </div>
           ${items}
         </div>
@@ -822,19 +866,16 @@ function renderReferrals(){
     </div>`;
   }).join("");
 
-  // Collapse/expand — closed by default, opens on click
   container.querySelectorAll(".referrer-block").forEach(block=>{
     const head = block.querySelector(".referrer-head");
     const body = block.querySelector(".referrer-body");
     head.onclick = ()=>{
       const open = block.classList.toggle("open");
       body.hidden = !open;
-      head.title = open ? "Click to collapse" : "Click to expand";
     };
   });
 }
 
-/* ---- Referral diagnostics ---- */
 async function diagnoseReferrals(){
   refDbgReset("Referral diagnostics — " + new Date().toISOString());
   refDbg(`Database: ${firebaseConfig.databaseURL}`);
@@ -843,8 +884,8 @@ async function diagnoseReferrals(){
   const candidates = [
     "referrals","userReferrals","referralData","referralTree","invites","inviteData",
     "referralEarnings","referralBalances","referral_earnings","referral_balance",
-    "referralCommissions","referralRewards",
-    "users","players","profiles","accounts"
+    "referralCommissions","referralRewards","commissions","userCommissions",
+    "earnings","rewards","users","players","profiles","accounts"
   ];
   for(const root of candidates){
     try{
@@ -852,36 +893,70 @@ async function diagnoseReferrals(){
       if(!snap.exists()){ refDbg(`${root} → (empty)`); continue; }
       const val = snap.val();
       const keys = Object.keys(val);
-      refDbg(`${root} → ${keys.length} top-level key(s): ${keys.slice(0,5).join(", ")}${keys.length>5?"…":""}`);
+      refDbg(`${root} → ${keys.length} key(s): ${keys.slice(0,5).join(", ")}`);
       const firstId = keys[0];
       const first = val[firstId];
       if(first && typeof first==="object"){
         const fields = Object.keys(first);
-        refDbg(`    ${root}/${firstId} → fields: [${fields.slice(0,15).join(", ")}${fields.length>15?"…":""}]`);
-        refDbg(`    Sample: ${JSON.stringify(first).slice(0,350)}`);
-        const firstChild = first[fields[0]];
-        if(firstChild && typeof firstChild==="object" && !Array.isArray(firstChild)){
-          const subFields = Object.keys(firstChild);
-          refDbg(`        ${root}/${firstId}/${fields[0]} → sub-keys: [${subFields.slice(0,10).join(", ")}${subFields.length>10?"…":""}]`);
-          refDbg(`        Sub sample: ${JSON.stringify(firstChild).slice(0,250)}`);
-        }
+        refDbg(`    ${root}/${firstId} fields: [${fields.slice(0,20).join(", ")}]`);
+        refDbg(`    Sample: ${JSON.stringify(first).slice(0,400)}`);
       } else if(typeof first !== "object"){
-        refDbg(`    ${root}/${firstId} → value = ${JSON.stringify(first)}`);
+        refDbg(`    ${root}/${firstId} = ${JSON.stringify(first)}`);
       }
-    }catch(e){
-      refDbg(`${root} → error: ${e.message}`);
-    }
+    }catch(e){ refDbg(`${root} → error: ${e.message}`); }
   }
-  setRefStatus("Referral diagnostics complete. See panel below.","ok");
+  setRefStatus("Referral diagnostics complete.","ok");
 }
 
-/* ============================================================
-   Wiring
-   ============================================================ */
+async function diagnoseEarnings(){
+  refDbgReset("Earnings diagnostics — " + new Date().toISOString());
+  setRefStatus("Scanning for earnings fields…");
+
+  for(const base of ["users","players","profiles","accounts"]){
+    try{
+      const snap = await db.ref(base).orderByKey().limitToFirst(3).once("value");
+      if(!snap.exists()){ refDbg(`${base} → (empty)`); continue; }
+      const val = snap.val();
+      const ids = Object.keys(val);
+      refDbg(`\n${base} → sampling ${Math.min(3,ids.length)} of ${ids.length}`);
+      for(const id of ids.slice(0,3)){
+        const u = val[id];
+        if(!u || typeof u!=="object") continue;
+        const numeric = [], earnLike = [];
+        for(const [k,v] of Object.entries(u)){
+          if(typeof v === "number" && Number.isFinite(v)) numeric.push(`${k}=${v}`);
+          else if(typeof v === "string" && v.trim()!=="" && Number.isFinite(Number(v))) numeric.push(`${k}="${v}"`);
+          if(isEarnField(k)) earnLike.push(`${k}=${JSON.stringify(v).slice(0,60)}`);
+        }
+        refDbg(`  ${base}/${id}`);
+        refDbg(`    numeric (${numeric.length}): ${numeric.slice(0,25).join(", ") || "(none)"}`);
+        refDbg(`    earnLike: ${earnLike.slice(0,15).join(", ") || "(none)"}`);
+        const se = smartEarningsFromObject(u);
+        refDbg(`    smartDetect → ${se ? JSON.stringify(se) : "null"}`);
+      }
+    }catch(e){ refDbg(`${base} → error: ${e.message}`); }
+  }
+
+  refDbg(`\n--- Candidate earnings nodes ---`);
+  for(const n of EARNINGS_MAP_NODES){
+    try{
+      const snap = await db.ref(n).orderByKey().limitToLast(3).once("value");
+      if(!snap.exists()){ refDbg(`${n} → (empty)`); continue; }
+      const val = snap.val();
+      const keys = Object.keys(val);
+      refDbg(`${n} → ${keys.length} key(s): ${keys.slice(0,6).join(", ")}`);
+      refDbg(`    Sample: ${JSON.stringify(val).slice(0,400)}`);
+    }catch(e){ refDbg(`${n} → error: ${e.message}`); }
+  }
+  setRefStatus("Earnings diagnostics complete.","ok");
+}
+
 $("load").onclick = load;
 $("diagnose").onclick = diagnose;
 $("loadRef").onclick = loadReferrals;
 $("diagRef").onclick = diagnoseReferrals;
+$("diagEarn").onclick = diagnoseEarnings;
+$("applyEarn").onclick = ()=>{ userInfoCache.clear(); loadReferrals(); };
 $("refSearch").addEventListener("input", ()=>{ if(refData.referrers) renderReferrals(); });
 $("refSort").addEventListener("change", ()=>{ if(refData.referrers) renderReferrals(); });
 $("refresh").onclick = ()=>{
